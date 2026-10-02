@@ -81,10 +81,14 @@ export default function Login() {
                   const to = typeof state?.from === 'string' && state.from.startsWith('/') && !state.from.startsWith('//') ? state.from : '/';
                   navigate(to, { replace: true });
                 } catch (err) {
-                  setError('Google login failed.');
+                  console.error('Google login error:', err);
+                  setError(err.message || 'Google login failed.');
                 }
               }}
-              onError={() => setError('Google login failed.')}
+              onError={(err) => {
+                console.error('Google OAuth popup error:', err);
+                setError('Google popup was closed or origin not authorized. Please check console.');
+              }}
             />
           </div>
         </form>
