@@ -53,7 +53,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithGoogle = useCallback(async (credential) => {
-    const d = await api.post('/auth/google', { credential });
+    const d = await api.post('/auth/google', {
+      credential,
+      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    });
     if (d.token) localStorage.setItem('sulax_token', d.token);
     setUser(d.user);
     return d.user;
