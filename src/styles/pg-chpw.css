@@ -1,0 +1,46 @@
+.pg-chpw{min-height:60vh;}
+.pg-chpw{
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+.pg-chpw .container{
+            max-width: 500px;
+            margin: 60px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+.pg-chpw h1{
+            color: #f85606;
+        }
+.pg-chpw label{
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+.pg-chpw input{
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            box-sizing: border-box;
+        }
+.pg-chpw button{
+            width: 100%;
+            padding: 13px;
+            margin-top: 20px;
+            background: #f85606;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+.pg-chpw .success{
+            background: #e8f7e8;
+            color: green;
+            padding: 10px;
+        }
+.pg-chpw .error{
+            background: #ffe8e8;
+            color: red;
+            padding: 10px;
+        }

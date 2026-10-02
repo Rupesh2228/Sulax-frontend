@@ -1,0 +1,58 @@
+.pg-account{min-height:60vh;}
+.pg-account{
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+.pg-account .navbar{
+            background: #f85606;
+            color: white;
+            padding: 18px 30px;
+        }
+.pg-account .navbar a{
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+.pg-account .container{
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+.pg-account .profile{
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+.pg-account .profile-icon{
+            font-size: 60px;
+        }
+.pg-account .profile h2{
+            color: #f85606;
+        }
+.pg-account .menu{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+.pg-account .menu a{
+            background: white;
+            padding: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+.pg-account .menu a:hover{
+            background: #fff3ed;
+        }
+.pg-account .menu-icon{
+            font-size: 35px;
+            display: block;
+            margin-bottom: 10px;
+        }
+@media(max-width: 700px){.pg-account .menu{
+                grid-template-columns: 1fr;
+            }}

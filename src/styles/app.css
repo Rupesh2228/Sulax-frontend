@@ -1,0 +1,122 @@
+/* Small additions needed by the React version */
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.link-button:hover { text-decoration: underline; }
+.auth-button:disabled, .place-order-btn:disabled, .contact-form button:disabled { opacity: .6; cursor: not-allowed; }
+.cancel-order-btn { cursor: pointer; }
+
+.loader {
+  border: 4px solid #ffeadf;
+  border-top: 4px solid #f85606;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fade-in-title {
+  animation: fadeIn 1s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  box-sizing: border-box;
+  color: #64748b;
+  background: linear-gradient(180deg, #fff8f4 0%, #f8fafc 100%);
+  animation: loadingFadeIn .25s ease-out both;
+}
+
+.app-loading--compact {
+  min-height: 180px;
+  padding: 24px 12px;
+  background: transparent;
+}
+
+.app-loading p {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.app-loading__spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #ffeadf;
+  border-top-color: #f85606;
+  border-right-color: #ff9a5c;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  box-shadow: 0 8px 20px rgba(248, 86, 6, .12);
+}
+
+.app-loading__retry {
+  min-height: 42px;
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: #f85606;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-loading__retry:hover {
+  background: #c84408;
+}
+
+@keyframes loadingFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loading,
+  .app-loading__spinner,
+  .loader {
+    animation: none;
+  }
+}
+
+.admin-nav { display: flex; flex-direction: column; gap: 10px; }
+.admin-link { padding: 10px 20px; color: #cbd5e1; text-decoration: none; transition: background 0.2s; }
+.admin-link:hover { background: #374151; color: #fff; }
+.admin-link.active { background: #374151; color: #fff; border-left: 4px solid #3b82f6; }
+.stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; text-align: center; }
+.stat-card h3 { margin: 0 0 10px 0; color: #6b7280; font-size: 1.1em; }
+.stat-card p { margin: 0; font-size: 2em; font-weight: bold; color: #1f2937; }

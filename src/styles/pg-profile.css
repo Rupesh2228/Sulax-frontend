@@ -1,0 +1,45 @@
+.pg-profile{min-height:60vh;}
+.pg-profile{
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+        }
+.pg-profile .container{
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+.pg-profile h1{
+            color: #f85606;
+        }
+.pg-profile label{
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+.pg-profile input,.pg-profile textarea{
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            box-sizing: border-box;
+        }
+.pg-profile textarea{
+            height: 100px;
+        }
+.pg-profile button{
+            width: 100%;
+            padding: 13px;
+            margin-top: 20px;
+            background: #f85606;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+.pg-profile .success{
+            color: green;
+            background: #e8f7e8;
+            padding: 10px;
+        }
