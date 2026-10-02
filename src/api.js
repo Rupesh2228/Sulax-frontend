@@ -1,4 +1,4 @@
-const HOST = import.meta.env.VITE_API_URL || '';
+const HOST = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 const BASE = `${HOST}/api`;
 
 export const imgUrl = (name) => {

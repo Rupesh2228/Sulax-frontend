@@ -78,9 +78,10 @@ export function SocketProvider({ children }) {
     }
 
     const developmentSocketUrl = `${window.location.protocol}//${window.location.hostname}:5000`;
-    const socketUrl = import.meta.env.VITE_SOCKET_URL
+    const rawSocketUrl = import.meta.env.VITE_SOCKET_URL
       || import.meta.env.VITE_API_URL
       || (import.meta.env.DEV ? developmentSocketUrl : window.location.origin);
+    const socketUrl = String(rawSocketUrl).replace(/\/+$/, '');
     const newSocket = io(socketUrl, {
       autoConnect: false,
       withCredentials: true,
