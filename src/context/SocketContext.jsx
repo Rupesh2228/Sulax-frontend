@@ -85,6 +85,9 @@ export function SocketProvider({ children }) {
     const newSocket = io(socketUrl, {
       autoConnect: false,
       withCredentials: true,
+      auth: {
+        token: typeof localStorage !== 'undefined' ? localStorage.getItem('sulax_token') : null,
+      },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity,

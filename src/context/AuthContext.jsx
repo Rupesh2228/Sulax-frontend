@@ -41,23 +41,31 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const d = await api.post('/auth/login', { email, password });
+    if (d.token) localStorage.setItem('sulax_token', d.token);
     setUser(d.user);
     return d.user;
   }, []);
 
   const register = useCallback(async (form) => {
     const d = await api.post('/auth/register', form);
+    if (d.token) localStorage.setItem('sulax_token', d.token);
     setUser(d.user);
   }, []);
 
   const loginWithGoogle = useCallback(async (credential) => {
     const d = await api.post('/auth/google', { credential });
+    if (d.token) localStorage.setItem('sulax_token', d.token);
     setUser(d.user);
     return d.user;
   }, []);
 
   const logout = useCallback(async () => {
-    try { await api.post('/auth/logout'); } finally { setUser(null); }
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      localStorage.removeItem('sulax_token');
+      setUser(null);
+    }
   }, []);
 
   return (

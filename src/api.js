@@ -33,6 +33,8 @@ async function ensureCsrf(force = false) {
 async function request(path, { method = 'GET', body, form } = {}, retried = false) {
   const headers = {};
   if (method !== 'GET') headers['X-CSRF-Token'] = await ensureCsrf();
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sulax_token') : null;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   let payload;
   if (form) {
     payload = form;
