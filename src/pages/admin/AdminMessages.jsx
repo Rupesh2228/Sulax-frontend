@@ -41,7 +41,7 @@ function formatDateSeparator(dateStr) {
 }
 
 export default function AdminMessages() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedConversationId = searchParams.get('conversation');
   const { user } = useAuth();
   const { socket, isConnected, refreshUnreadCount } = useSocket();
@@ -138,6 +138,15 @@ export default function AdminMessages() {
         setLoadingMessages(false);
         setTimeout(() => scrollToBottom(false), 80);
       }
+    }
+  };
+
+  const backToInbox = () => {
+    setActiveConv(null);
+    if (searchParams.has('conversation')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('conversation');
+      setSearchParams(nextParams, { replace: true });
     }
   };
 
@@ -455,7 +464,7 @@ export default function AdminMessages() {
   };
 
   return (
-    <div className="admin-messages-layout">
+    <div className={`admin-messages-layout${activeConv ? ' is-chat-open' : ''}`}>
       {/* Left Column: Inbox / Customers List */}
       <aside className="admin-inbox-sidebar">
         <div className="admin-inbox-header">
@@ -557,6 +566,14 @@ export default function AdminMessages() {
           <>
             {/* Top info bar */}
             <div className="admin-chat-header">
+              <button
+                type="button"
+                className="admin-chat-back-inbox"
+                onClick={backToInbox}
+                aria-label="Back to conversations"
+              >
+                ← <span>Inbox</span>
+              </button>
               <div className="admin-chat-header-user">
                 <div
                   className="admin-conv-avatar"

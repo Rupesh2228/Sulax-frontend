@@ -118,6 +118,20 @@ export default function AdminStats() {
           </div>
         </div>
 
+        {/* Pending */}
+        <div className="admin-stat-card">
+          <div className="admin-stat-info">
+            <h3>Pending Orders</h3>
+            <div className="admin-stat-number">{pendingOrders}</div>
+            <div className="admin-stat-subtext">
+              <span>Awaiting confirmation</span>
+            </div>
+          </div>
+          <div className="admin-stat-icon-wrap orange">
+            <OrdersIcon size={22} color="#f97316" />
+          </div>
+        </div>
+
         {/* Catalog */}
         <div className="admin-stat-card">
           <div className="admin-stat-info">
@@ -158,7 +172,7 @@ export default function AdminStats() {
       </div>
 
       {/* Visual Analytics Row: Order Fulfillment Pipeline + Weekly Revenue Chart */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px', marginBottom: '24px' }}>
+      <div className="admin-analytics-grid">
         {/* Order Fulfillment Pipeline */}
         <div className="admin-card" style={{ marginBottom: 0 }}>
           <div className="admin-card-header">
@@ -235,7 +249,7 @@ export default function AdminStats() {
       </div>
 
       {/* Row 2: Recent Transactions + Low Stock Alert */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px' }}>
+      <div className="admin-summary-grid">
         {/* Recent Orders Table */}
         <div className="admin-card">
           <div className="admin-card-header">

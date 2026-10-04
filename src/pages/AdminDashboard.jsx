@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
@@ -19,6 +20,25 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { unreadCount } = useSocket();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [sidebarOpen]);
 
   if (!user || user.role !== 'admin') {
     return <Navigate to="/" replace />;
@@ -34,9 +54,16 @@ export default function AdminDashboard() {
   else if (path.includes('/sulax-itnb-admain/seo')) pageTitle = 'SEO & Metadata Manager';
 
   return (
-    <div className="admin-shell">
-      {/* Sidebar */}
-      <aside className="admin-sidebar">
+    <div className={`admin-shell${sidebarOpen ? ' admin-shell--drawer-open' : ''}`}>
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="admin-drawer-overlay"
+          aria-label="Close navigation menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <aside className={`admin-sidebar${sidebarOpen ? ' is-open' : ''}`} id="admin-navigation">
         <div className="admin-sidebar-header">
           <Link to="/sulax-itnb-admain" className="admin-brand-link">
             <div className="admin-brand-logo-icon">
@@ -46,32 +73,40 @@ export default function AdminDashboard() {
               Sulax <span className="admin-brand-badge">Command Center</span>
             </div>
           </Link>
+          <button
+            type="button"
+            className="admin-sidebar-close"
+            aria-label="Close navigation menu"
+            onClick={() => setSidebarOpen(false)}
+          >
+            ×
+          </button>
         </div>
 
         <nav className="admin-nav">
           <div className="admin-nav-heading">Store Operations</div>
 
-          <NavLink to="/sulax-itnb-admain" end className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink to="/sulax-itnb-admain" end onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <DashboardIcon size={18} />
             <span>Dashboard</span>
           </NavLink>
 
-          <NavLink to="/sulax-itnb-admain/products" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink to="/sulax-itnb-admain/products" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <ProductsIcon size={18} />
             <span>Products & Stock</span>
           </NavLink>
 
-          <NavLink to="/sulax-itnb-admain/orders" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink to="/sulax-itnb-admain/orders" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <OrdersIcon size={18} />
             <span>Orders & Shipping</span>
           </NavLink>
 
-          <NavLink to="/sulax-itnb-admain/customers" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink to="/sulax-itnb-admain/customers" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <CustomersIcon size={18} />
             <span>Customers</span>
           </NavLink>
 
-          <NavLink to="/sulax-itnb-admain/messages" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink to="/sulax-itnb-admain/messages" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <ChatIcon size={18} />
             <span>Messages</span>
             {unreadCount > 0 && (
@@ -93,7 +128,7 @@ export default function AdminDashboard() {
 
           <div className="admin-nav-heading" style={{ marginTop: '16px' }}>Configuration</div>
 
-          <NavLink to="/sulax-itnb-admain/seo" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink to="/sulax-itnb-admain/seo" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <SeoIcon size={18} />
             <span>SEO & Meta Tags</span>
           </NavLink>
@@ -110,21 +145,11 @@ export default function AdminDashboard() {
             </div>
           </div>
           <button
+            className="admin-logout-btn"
+            type="button"
             onClick={logout}
             title="Sign Out"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#94a3b8',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '6px',
-              borderRadius: '6px',
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+            aria-label="Sign out"
           >
             <LogoutIcon size={18} />
           </button>
@@ -135,6 +160,18 @@ export default function AdminDashboard() {
       <div className="admin-main-wrap">
         {/* Topbar */}
         <header className="admin-topbar">
+          <button
+            type="button"
+            className="admin-menu-toggle"
+            aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={sidebarOpen}
+            aria-controls="admin-navigation"
+            onClick={() => setSidebarOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <div className="admin-breadcrumb">
             <Link to="/sulax-itnb-admain" style={{ color: 'inherit', fontWeight: 500 }}>Admin Portal</Link>
             <span style={{ color: '#cbd5e1' }}>/</span>
@@ -148,7 +185,7 @@ export default function AdminDashboard() {
               Live Storefront Connected
             </div>
 
-            <Link to="/" target="_blank" rel="noopener noreferrer" className="admin-view-store-btn">
+            <Link to="/" target="_blank" rel="noopener noreferrer" className="admin-view-store-btn" aria-label="View storefront">
               <StorefrontIcon size={16} />
               <span>View Storefront</span>
               <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>↗</span>
