@@ -23,13 +23,11 @@ import AdminCustomers from './pages/admin/AdminCustomers.jsx';
 import AdminSEO from './pages/admin/AdminSEO.jsx';
 import AdminMessages from './pages/admin/AdminMessages.jsx';
 import { useAuth } from './context/AuthContext.jsx';
-import LoadingScreen from './components/LoadingScreen.jsx';
 
 const P = (el) => <ProtectedRoute>{el}</ProtectedRoute>;
 
 export default function App() {
-  const { loading, sessionError, retrySession } = useAuth();
-  if (loading) return <LoadingScreen message="Getting your store ready..." />;
+  const { sessionError, retrySession } = useAuth();
   if (sessionError) {
     return (
       <div className="app-loading" role="alert">

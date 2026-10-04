@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { api, money } from '../api.js';
-import LoadingScreen from '../components/LoadingScreen.jsx';
+import { OrderSkeleton } from '../components/Skeletons.jsx';
+import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/pg-success.css';
 
 export default function OrderSuccess() {
@@ -10,10 +11,18 @@ export default function OrderSuccess() {
   const [order, setOrder] = useState(state?.order || null);
   const [loading, setLoading] = useState(!state?.order);
   const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const showLoading = useDelayedLoading(loading);
 
   useEffect(() => {
-    if (order) return;
+    if (state?.order?._id === id) {
+      setOrder(state.order);
+      setLoading(false);
+      setError('');
+      return undefined;
+    }
     let active = true;
+    setOrder(null);
     setLoading(true);
     setError('');
     api.get(`/orders/${id}`)
@@ -21,9 +30,10 @@ export default function OrderSuccess() {
       .catch((err) => { if (active) setError(err.message || 'Could not load this order.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [id, order]);
+  }, [id, state, attempt]);
 
-  if (loading) return <LoadingScreen message="Loading your order..." />;
+  if (loading) return showLoading ? <div className="pg-success"><OrderSkeleton /></div> : null;
+  if (!order && !error) return null;
 
   return (
     <div className="pg-success">
@@ -32,6 +42,7 @@ export default function OrderSuccess() {
           <>
             <h1>We could not load your order</h1>
             <p role="alert">{error}</p>
+            <button type="button" className="link-button" onClick={() => setAttempt((value) => value + 1)}>Retry</button>
           </>
         ) : (
           <>

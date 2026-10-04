@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { api } from '../../api.js';
 import { StatusTickIcon, SendPlaneIcon } from '../../components/MessageIcons.jsx';
+import { ChatSkeleton } from '../../components/Skeletons.jsx';
+import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 import '../../styles/chat.css';
 
 function formatTime(dateStr) {
@@ -61,10 +63,15 @@ export default function AdminMessages() {
   const [deletingMessageId, setDeletingMessageId] = useState('');
   const [deletingCustomerId, setDeletingCustomerId] = useState('');
   const [messageError, setMessageError] = useState('');
+  const [conversationError, setConversationError] = useState('');
+  const showListLoading = useDelayedLoading(loadingList && conversations.length === 0);
+  const showMessagesLoading = useDelayedLoading(loadingMessages && messages.length === 0);
 
   const chatMessagesEndRef = useRef(null);
   const chatMessagesContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const listRequestRef = useRef(0);
+  const messageRequestRef = useRef(0);
 
   const scrollToBottom = useCallback((smooth = true) => {
     if (chatMessagesEndRef.current) {
@@ -74,16 +81,19 @@ export default function AdminMessages() {
 
   // Fetch conversations list
   const fetchConversations = useCallback(async () => {
+    const requestId = ++listRequestRef.current;
+    setLoadingList(true);
+    setConversationError('');
     try {
       const q = new URLSearchParams();
       if (search.trim()) q.set('search', search.trim());
       if (filter === 'unread') q.set('filter', 'unread');
       const res = await api.get(`/messages/admin/conversations?${q.toString()}`);
-      setConversations(res.conversations || []);
+      if (requestId === listRequestRef.current) setConversations(res.conversations || []);
     } catch (err) {
-      console.error('Failed to load admin conversations:', err);
+      if (requestId === listRequestRef.current) setConversationError(err.message || 'Could not load conversations.');
     } finally {
-      setLoadingList(false);
+      if (requestId === listRequestRef.current) setLoadingList(false);
     }
   }, [search, filter]);
 
@@ -94,12 +104,16 @@ export default function AdminMessages() {
   // Load messages for selected conversation
   const selectConversation = async (conv) => {
     if (!conv) return;
+    const requestId = ++messageRequestRef.current;
     setActiveConv(conv);
+    setMessages([]);
     setLoadingMessages(true);
+    setMessageError('');
     setCustomerTyping(false);
 
     try {
       const res = await api.get(`/messages/conversations/${conv._id}/messages?limit=40`);
+      if (requestId !== messageRequestRef.current) return;
       setMessages(res.messages || []);
       setHasMore(res.hasMore || false);
       setNextCursor(res.nextCursor || null);
@@ -118,10 +132,12 @@ export default function AdminMessages() {
       );
       refreshUnreadCount();
     } catch (err) {
-      console.error('Failed to load conversation messages:', err);
+      if (requestId === messageRequestRef.current) setMessageError(err.message || 'Could not load conversation messages.');
     } finally {
-      setLoadingMessages(false);
-      setTimeout(() => scrollToBottom(false), 80);
+      if (requestId === messageRequestRef.current) {
+        setLoadingMessages(false);
+        setTimeout(() => scrollToBottom(false), 80);
+      }
     }
   };
 
@@ -479,10 +495,18 @@ export default function AdminMessages() {
         </div>
 
         <ul className="admin-conv-list">
-          {loadingList ? (
-            <li style={{ textAlign: 'center', padding: '30px 10px', color: '#64748b' }}>
-              <div className="loader" style={{ width: 24, height: 24, borderWidth: 3 }} />
-              <p style={{ fontSize: 13, marginTop: 8 }}>Loading conversations...</p>
+          {conversationError && conversations.length > 0 && (
+            <li className="admin-users-state" role="alert">
+              {conversationError}{' '}
+              <button className="admin-btn admin-btn-secondary" type="button" onClick={fetchConversations}>Retry</button>
+            </li>
+          )}
+          {loadingList && conversations.length === 0 ? (
+            showListLoading ? <li><ChatSkeleton rows={3} /></li> : null
+          ) : conversationError && conversations.length === 0 ? (
+            <li className="admin-users-state" role="alert">
+              <p>{conversationError}</p>
+              <button className="admin-btn admin-btn-secondary" type="button" onClick={fetchConversations}>Retry</button>
             </li>
           ) : conversations.length === 0 ? (
             <li style={{ textAlign: 'center', padding: '40px 16px', color: '#94a3b8' }}>
@@ -571,12 +595,12 @@ export default function AdminMessages() {
 
             {/* Messages Body */}
             <div className="admin-chat-messages" ref={chatMessagesContainerRef}>
-              {messageError && <div className="admin-message-error" role="alert">{messageError}</div>}
-              {loadingMessages ? (
-                <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                  <div className="loader" style={{ width: 28, height: 28, borderWidth: 3 }} />
-                  <p style={{ fontSize: 13, color: '#64748b', marginTop: 10 }}>Loading chat history...</p>
-                </div>
+              {messageError && <div className="admin-message-error" role="alert">
+                {messageError}{' '}
+                <button type="button" className="link-button" onClick={() => selectConversation(activeConv)}>Retry</button>
+              </div>}
+              {loadingMessages && messages.length === 0 ? (
+                showMessagesLoading ? <ChatSkeleton /> : null
               ) : (
                 <>
                   {hasMore && (
@@ -585,12 +609,13 @@ export default function AdminMessages() {
                       className="sulax-chat-load-more"
                       onClick={loadOlderMessages}
                       disabled={loadingOlder}
+                      aria-busy={loadingOlder}
                     >
-                      {loadingOlder ? 'Loading older messages...' : '↑ Load older messages'}
+                      ↑ Load older messages
                     </button>
                   )}
 
-                  {messages.length === 0 && (
+                  {messages.length === 0 && !messageError && (
                     <div className="sulax-chat-empty">
                       <p>No messages in this conversation yet.</p>
                     </div>

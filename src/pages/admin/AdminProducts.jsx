@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api, imgUrl, money } from '../../api.js';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, AlertIcon } from '../../components/admin/AdminIcons.jsx';
+import { TableSkeleton } from '../../components/Skeletons.jsx';
+import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const CATEGORY_PRESETS = ['Sneakers', 'Running', 'Boots', 'Formal', 'Sandals', 'Casual', 'Sports'];
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const showLoading = useDelayedLoading(loading && products.length === 0);
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,12 +51,13 @@ export default function AdminProducts() {
   };
 
   const loadProducts = async () => {
+    setLoading(true);
+    setLoadError('');
     try {
-      setLoading(true);
       const res = await api.get('/admin/products').catch(() => api.get('/products'));
       setProducts(res.products || []);
     } catch (err) {
-      showToast('Failed to load products', 'error');
+      setLoadError(err.message || 'Failed to load products.');
     } finally {
       setLoading(false);
     }
@@ -300,12 +305,10 @@ export default function AdminProducts() {
         </div>
 
         {/* Table Content */}
-        {loading ? (
-          <div style={{ padding: '60px 0', textAlign: 'center' }}>
-            <div className="loader"></div>
-            <p style={{ color: '#6b7280', marginTop: '12px' }}>Loading products...</p>
-          </div>
-        ) : filteredProducts.length === 0 ? (
+        {loadError && <div className="admin-users-state" role="alert">{loadError} <button className="admin-btn admin-btn-secondary" type="button" onClick={loadProducts}>Retry</button></div>}
+        {loading && products.length === 0 ? (
+          showLoading ? <TableSkeleton columns={5} rows={6} className="admin-table" /> : null
+        ) : loadError && products.length === 0 ? null : filteredProducts.length === 0 ? (
           <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6b7280' }}>
             <div style={{ fontSize: '3rem', marginBottom: '12px' }}>👟</div>
             <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>No products found</h3>

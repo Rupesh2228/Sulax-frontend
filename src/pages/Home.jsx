@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import ProductCard from '../components/ProductCard.jsx';
+import { CategorySkeleton, ProductGridSkeleton } from '../components/Skeletons.jsx';
 import SEO from '../components/SEO.jsx';
-import LoadingScreen from '../components/LoadingScreen.jsx';
+import useDelayedLoading from '../hooks/useDelayedLoading.js';
 
 export default function Home() {
   const [params, setParams] = useSearchParams();
@@ -13,31 +14,44 @@ export default function Home() {
 
   const [categories, setCategories] = useState([]);
   const [categoriesError, setCategoriesError] = useState('');
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [products, setProducts] = useState(null);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsFetching, setProductsFetching] = useState(false);
   const [error, setError] = useState('');
   const [categoriesAttempt, setCategoriesAttempt] = useState(0);
   const [productsAttempt, setProductsAttempt] = useState(0);
+  const showCategoriesLoading = useDelayedLoading(categoriesLoading);
+  const showProductsLoading = useDelayedLoading(productsLoading || productsFetching);
 
   useEffect(() => {
     let active = true;
     setCategoriesError('');
+    setCategoriesLoading(true);
     api.get('/products/categories')
       .then((d) => { if (active) setCategories(d.categories); })
-      .catch((e) => { if (active) setCategoriesError(e.message || 'Could not load product categories.'); });
+      .catch((e) => { if (active) setCategoriesError(e.message || 'Could not load product categories.'); })
+      .finally(() => { if (active) setCategoriesLoading(false); });
     return () => { active = false; };
   }, [categoriesAttempt]);
 
   useEffect(() => {
     let active = true;
-    setProducts(null);
     setError('');
+    setProductsFetching(true);
     const q = new URLSearchParams();
     if (search) q.set('search', search);
     if (category) q.set('category', category);
     q.set('sort', sort);
     api.get(`/products?${q}`)
-      .then((d) => { if (active) setProducts(d.products); })
-      .catch((e) => { if (active) { setError(e.message || 'Could not load products.'); setProducts([]); } });
+      .then((d) => { if (active) { setProducts(d.products); setProductsLoading(false); } })
+      .catch((e) => { if (active) setError(e.message || 'Could not load products.'); })
+      .finally(() => {
+        if (active) {
+          setProductsFetching(false);
+          setProductsLoading(false);
+        }
+      });
     return () => { active = false; };
   }, [search, category, sort, productsAttempt]);
 
@@ -50,7 +64,7 @@ export default function Home() {
       <nav className="category-nav" aria-label="Shop by category">
         <div className="category-container">
           <Link to="/" className={!category ? 'active' : ''}>All Shoes</Link>
-          {categories.map((c) => (
+          {showCategoriesLoading ? <CategorySkeleton /> : categories.map((c) => (
             <Link key={c} to={catLink(c)} className={category === c ? 'active' : ''} aria-current={category === c ? 'page' : undefined}>{c}</Link>
           ))}
           {categoriesError && <button className="link-button" type="button" onClick={() => setCategoriesAttempt((attempt) => attempt + 1)}>Retry categories</button>}
@@ -74,7 +88,7 @@ export default function Home() {
           <div className="section-title product-heading">
             <div>
               <h2>{category || (search ? 'Search results' : 'Shop all shoes')}</h2>
-              <p>{products ? products.length : '…'} styles to explore</p>
+              <p>{products ? products.length : '—'} styles to explore</p>
             </div>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
               <select value={sort} aria-label="Sort products"
@@ -90,11 +104,11 @@ export default function Home() {
 
           {categoriesError && <p className="error-message" role="status">{categoriesError}</p>}
           {error && <div className="error-message" role="alert">{error} <button className="link-button" type="button" onClick={() => setProductsAttempt((attempt) => attempt + 1)}>Retry</button></div>}
-          {products === null && <LoadingScreen message="Loading shoes..." compact />}
+          {products === null && showProductsLoading && <ProductGridSkeleton />}
           {products && products.length > 0 && (
             <div className="product-grid">{products.map((p) => <ProductCard key={p._id} p={p} />)}</div>
           )}
-          {!error && products && products.length === 0 && (
+          {!error && !productsFetching && products && products.length === 0 && (
             <div className="empty-products"><p>No shoes match those filters.</p><Link to="/">Browse all shoes</Link></div>
           )}
         </section>

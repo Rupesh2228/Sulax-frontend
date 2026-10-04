@@ -4,7 +4,8 @@ import { api, imgUrl, money } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import SEO from '../components/SEO.jsx';
-import LoadingScreen from '../components/LoadingScreen.jsx';
+import { ProductDetailsSkeleton } from '../components/Skeletons.jsx';
+import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/pg-product.css';
 
 const SIZES = ['6', '7', '8', '9', '10', '11'];
@@ -34,6 +35,10 @@ export default function ProductDetails() {
 
   const [data, setData] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
+  const showLoading = useDelayedLoading(loading);
   const [size, setSize] = useState('');
   const [qty, setQty] = useState(1);
   const [msg, setMsg] = useState({ text: '', ok: false });
@@ -54,15 +59,27 @@ export default function ProductDetails() {
     });
 
   useEffect(() => {
-    setData(null); setNotFound(false); setSize(''); setQty(1); setMsg({ text: '' });
+    let active = true;
+    setData(null); setNotFound(false); setLoadError(''); setLoading(true); setSize(''); setQty(1); setMsg({ text: '' });
     window.scrollTo(0, 0);
-    api.get(`/products/${id}`).then(setData).catch(() => setNotFound(true));
-  }, [id]);
+    api.get(`/products/${id}`)
+      .then((result) => { if (active) setData(result); })
+      .catch((error) => {
+        if (!active) return;
+        if (error.status === 404) setNotFound(true);
+        else setLoadError(error.message || 'Could not load this product.');
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id, attempt]);
 
   useEffect(() => { loadReviews(); }, [id, user]); // eslint-disable-line
 
   if (notFound) return <div className="pg-product"><main className="details-wrap"><p>Product not found.</p><Link to="/" className="back-link">← Back to Products</Link></main></div>;
-  if (!data) return <LoadingScreen message="Loading product details..." />;
+  if (loadError) return <div className="pg-product"><main className="details-wrap"><p className="error-message" role="alert">{loadError}</p><button className="link-button" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button><p><Link to="/" className="back-link">← Back to Products</Link></p></main></div>;
+  if (!data || data.product?._id !== id) {
+    return showLoading ? <div className="pg-product"><ProductDetailsSkeleton /></div> : null;
+  }
 
   const { product, related } = data;
   const stock = Math.max(0, product.stock);

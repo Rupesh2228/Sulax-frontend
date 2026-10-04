@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
 import { api } from '../api.js';
 import { StatusTickIcon, WhatsAppIcon, SendPlaneIcon, VerifiedBadgeIcon } from './MessageIcons.jsx';
+import { ChatSkeleton } from './Skeletons.jsx';
+import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/chat.css';
 
 function formatTime(dateStr) {
@@ -32,6 +34,8 @@ export default function CustomerChatWidget() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const showLoading = useDelayedLoading(loading && messages.length === 0);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -41,6 +45,7 @@ export default function CustomerChatWidget() {
   const messagesEndRef = useRef(null);
   const chatBodyRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const conversationRequestRef = useRef(0);
 
   // Auto scroll to bottom
   const scrollToBottom = useCallback((smooth = true) => {
@@ -52,13 +57,17 @@ export default function CustomerChatWidget() {
   // Fetch or initialize customer conversation
   const loadConversationAndMessages = useCallback(async () => {
     if (!user) return;
+    const requestId = ++conversationRequestRef.current;
     setLoading(true);
+    setLoadError('');
     try {
       const convRes = await api.get('/messages/my-conversation');
       const conv = convRes.conversation;
+      if (requestId !== conversationRequestRef.current) return;
       setConversation(conv);
 
       const msgRes = await api.get(`/messages/conversations/${conv._id}/messages?limit=30`);
+      if (requestId !== conversationRequestRef.current) return;
       setMessages(msgRes.messages || []);
       setHasMore(msgRes.hasMore || false);
       setNextCursor(msgRes.nextCursor || null);
@@ -73,10 +82,12 @@ export default function CustomerChatWidget() {
       }
       setUnreadCount(0);
     } catch (err) {
-      console.error('Failed to load conversation history:', err);
+      if (requestId === conversationRequestRef.current) setLoadError(err.message || 'Could not load your conversation.');
     } finally {
-      setLoading(false);
-      setTimeout(() => scrollToBottom(false), 80);
+      if (requestId === conversationRequestRef.current) {
+        setLoading(false);
+        setTimeout(() => scrollToBottom(false), 80);
+      }
     }
   }, [user, socket, setUnreadCount, scrollToBottom]);
 
@@ -417,13 +428,16 @@ export default function CustomerChatWidget() {
                   </Link>
                 </div>
               </div>
-            ) : loading ? (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <div className="loader" style={{ width: 28, height: 28, borderWidth: 3 }} />
-                <p style={{ fontSize: 13, color: '#64748b', marginTop: 10 }}>Loading conversation...</p>
-              </div>
+            ) : loading && messages.length === 0 ? (
+              showLoading ? <ChatSkeleton /> : null
             ) : (
               <>
+                {loadError && (
+                  <div className="admin-message-error" role="alert">
+                    {loadError}{' '}
+                    <button type="button" className="link-button" onClick={loadConversationAndMessages}>Retry</button>
+                  </div>
+                )}
                 {/* Load More Button */}
                 {hasMore && (
                   <button
@@ -431,13 +445,14 @@ export default function CustomerChatWidget() {
                     className="sulax-chat-load-more"
                     onClick={loadOlderMessages}
                     disabled={loadingOlder}
+                    aria-busy={loadingOlder}
                   >
-                    {loadingOlder ? 'Loading older messages...' : '↑ Load older messages'}
+                    ↑ Load older messages
                   </button>
                 )}
 
                 {/* Empty State */}
-                {messages.length === 0 && (
+                {messages.length === 0 && !loadError && (
                   <div className="sulax-chat-empty">
                     <div className="sulax-chat-empty-icon">👟</div>
                     <p>

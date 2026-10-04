@@ -11,34 +11,34 @@ import {
   PlusIcon,
   CheckIcon,
 } from '../../components/admin/AdminIcons.jsx';
+import { DashboardStatsSkeleton } from '../../components/Skeletons.jsx';
+import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 export default function AdminStats() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const showLoading = useDelayedLoading(loading);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/admin/stats').catch(() => null),
-      api.get('/admin/orders').catch(() => ({ orders: [] })),
-    ])
+    let active = true;
+    setLoading(true);
+    setError('');
+    Promise.all([api.get('/admin/stats'), api.get('/admin/orders')])
       .then(([statsData, ordersData]) => {
-        if (statsData) setStats(statsData);
-        if (ordersData?.orders) setOrders(ordersData.orders);
+        if (!active) return;
+        setStats(statsData);
+        setOrders(ordersData.orders || []);
       })
-      .finally(() => setLoading(false));
-  }, []);
+      .catch((err) => { if (active) setError(err.message || 'Could not load dashboard data.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [attempt]);
 
-  if (loading) {
-    return (
-      <div style={{ padding: '80px 0', textAlign: 'center' }}>
-        <div className="loader"></div>
-        <p style={{ color: '#64748b', marginTop: '14px', fontSize: '0.9rem' }}>
-          Aggregating store telemetry & sales metrics...
-        </p>
-      </div>
-    );
-  }
+  if (loading) return showLoading ? <DashboardStatsSkeleton /> : null;
+  if (error && !stats) return <div role="alert" className="admin-users-state">{error} <button className="admin-btn admin-btn-secondary" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></div>;
 
   // The API aggregates all orders; this fallback also supports older order records.
   const totalRevenue = orders.reduce((sum, o) => {

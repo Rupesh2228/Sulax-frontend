@@ -2,18 +2,32 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, money } from '../api.js';
 import { shortId } from './MyOrders.jsx';
-import LoadingScreen from '../components/LoadingScreen.jsx';
+import { OrderSkeleton } from '../components/Skeletons.jsx';
+import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/pg-order.css';
 
 export default function OrderDetails() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
+  const showLoading = useDelayedLoading(loading);
 
-  useEffect(() => { api.get(`/orders/${id}`).then((d) => setOrder(d.order)).catch(() => setError('Order not found.')); }, [id]);
+  useEffect(() => {
+    let active = true;
+    setOrder(null);
+    setError('');
+    setLoading(true);
+    api.get(`/orders/${id}`)
+      .then((d) => { if (active) setOrder(d.order); })
+      .catch((err) => { if (active) setError(err.message || 'Could not load this order.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id, attempt]);
 
-  if (error) return <div className="pg-order"><div className="container"><p>{error}</p><Link to="/my-orders">← My Orders</Link></div></div>;
-  if (!order) return <LoadingScreen message="Loading order details..." />;
+  if (error) return <div className="pg-order"><div className="container"><p role="alert">{error}</p><button className="link-button" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button><p><Link to="/my-orders">← My Orders</Link></p></div></div>;
+  if (!order || order._id !== id) return showLoading ? <div className="pg-order"><div className="container"><OrderSkeleton /></div></div> : null;
 
   return (
     <div className="pg-order">

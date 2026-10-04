@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api.js';
+import { AdminFormSkeleton } from '../../components/Skeletons.jsx';
+import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const PAGES = [
   { id: 'home', name: 'Home Page', icon: '🏠' },
@@ -22,9 +24,12 @@ const ROBOTS_OPTIONS = [
 export default function AdminSEO() {
   const [selectedPage, setSelectedPage] = useState('home');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [attempt, setAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [jsonError, setJsonError] = useState('');
   const [toast, setToast] = useState(null);
+  const showLoading = useDelayedLoading(loading);
 
   const [formData, setFormData] = useState({
     pageName: '',
@@ -50,6 +55,7 @@ export default function AdminSEO() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setLoadError('');
     setJsonError('');
 
     api
@@ -75,7 +81,10 @@ export default function AdminSEO() {
         });
       })
       .catch((err) => {
-        showToast(err.message || 'Failed to fetch SEO settings', 'error');
+        if (active) {
+          setLoadError(err.message || 'Failed to load SEO settings.');
+          showToast(err.message || 'Failed to fetch SEO settings', 'error');
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -84,7 +93,7 @@ export default function AdminSEO() {
     return () => {
       active = false;
     };
-  }, [selectedPage]);
+  }, [selectedPage, attempt]);
 
   // Format & Validate JSON-LD Schema
   const formatJsonLd = () => {
@@ -177,10 +186,10 @@ export default function AdminSEO() {
         ))}
       </div>
 
-      {loading ? (
-        <div style={{ padding: '80px 0', textAlign: 'center' }}>
-          <div className="loader"></div>
-          <p style={{ color: '#6b7280', marginTop: '12px' }}>Loading page SEO configuration...</p>
+      {loading ? (showLoading ? <AdminFormSkeleton /> : null) : loadError ? (
+        <div className="admin-users-state" role="alert">
+          <p>{loadError}</p>
+          <button className="admin-btn admin-btn-secondary" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button>
         </div>
       ) : (
         <form id="admin-seo-form" onSubmit={handleSave}>

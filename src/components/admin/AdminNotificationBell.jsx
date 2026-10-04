@@ -4,6 +4,7 @@ import { api } from '../../api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { BellIcon } from './AdminIcons.jsx';
+import { NotificationSkeleton } from '../Skeletons.jsx';
 
 const ADMIN_PATH = '/sulax-itnb-admain';
 
@@ -494,7 +495,7 @@ export default function AdminNotificationBell() {
               </div>
             ))}
           </div>
-          {loading && <div className="admin-notification-state">Loading notifications…</div>}
+          {loading && notifications.length === 0 && <NotificationSkeleton />}
           {!loading && hasMore && (
             <button
               className="admin-notification-load-more"

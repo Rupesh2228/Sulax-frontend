@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../../api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { SearchIcon } from '../../components/admin/AdminIcons.jsx';
+import { TableSkeleton } from '../../components/Skeletons.jsx';
+import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const emptyForm = { name: '', email: '', phone: '', address: '' };
 
@@ -28,6 +30,7 @@ export default function AdminCustomers() {
   const [saving, setSaving] = useState(false);
   const [busyUserId, setBusyUserId] = useState('');
   const [toast, setToast] = useState(null);
+  const showLoading = useDelayedLoading(loading && users.length === 0);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -165,9 +168,10 @@ export default function AdminCustomers() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="admin-users-state"><div className="loader" /><p>Loading users...</p></div>
-        ) : loadError ? (
+        {loadError && users.length > 0 && <p className="admin-users-state" role="alert">{loadError}</p>}
+        {loading && users.length === 0 ? (
+          showLoading ? <TableSkeleton columns={6} rows={6} className="admin-table" /> : null
+        ) : loadError && users.length === 0 ? (
           <div className="admin-users-state" role="alert">
             <p>{loadError}</p>
             <button className="admin-btn admin-btn-secondary" type="button" onClick={loadUsers}>Retry</button>

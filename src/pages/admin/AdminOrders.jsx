@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, money } from '../../api.js';
 import { SearchIcon, OrdersIcon } from '../../components/admin/AdminIcons.jsx';
+import { TableSkeleton } from '../../components/Skeletons.jsx';
+import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 export default function AdminOrders() {
   const [searchParams] = useSearchParams();
@@ -13,6 +15,9 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [toast, setToast] = useState(null);
   const [removingItemIndex, setRemovingItemIndex] = useState(null);
+  const [loadError, setLoadError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const showLoading = useDelayedLoading(loading && orders.length === 0);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -20,12 +25,15 @@ export default function AdminOrders() {
   };
 
   useEffect(() => {
-    api
-      .get('/admin/orders')
-      .then((d) => setOrders(d.orders || []))
-      .catch((err) => showToast(err.message || 'Failed to load orders', 'error'))
-      .finally(() => setLoading(false));
-  }, []);
+    let active = true;
+    setLoading(true);
+    setLoadError('');
+    api.get('/admin/orders')
+      .then((d) => { if (active) setOrders(d.orders || []); })
+      .catch((err) => { if (active) setLoadError(err.message || 'Failed to load orders.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [attempt]);
 
   useEffect(() => {
     if (!requestedOrderId) return;
@@ -157,12 +165,14 @@ export default function AdminOrders() {
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div style={{ padding: '60px 0', textAlign: 'center' }}>
-            <div className="loader"></div>
-            <p style={{ color: '#6b7280', marginTop: '12px' }}>Loading orders...</p>
-          </div>
-        ) : filteredOrders.length === 0 ? (
+        {loadError && orders.length === 0 ? (
+          <div className="admin-users-state" role="alert">{loadError} <button className="admin-btn admin-btn-secondary" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></div>
+        ) : loading && orders.length === 0 ? (
+          showLoading ? <TableSkeleton columns={7} rows={6} className="admin-table" /> : null
+        ) : (
+          <>
+        {loadError && <p className="admin-users-state" role="alert">{loadError}</p>}
+        {filteredOrders.length === 0 ? (
           <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6b7280' }}>
             <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🛒</div>
             <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>No orders found</h3>
@@ -249,6 +259,8 @@ export default function AdminOrders() {
               </tbody>
             </table>
           </div>
+        )}
+          </>
         )}
       </div>
 

@@ -2,16 +2,30 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, imgUrl, money } from '../api.js';
 import SEO from '../components/SEO.jsx';
-import LoadingScreen from '../components/LoadingScreen.jsx';
+import { ProductGridSkeleton } from '../components/Skeletons.jsx';
+import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/pg-wishlist.css';
 
 export default function Wishlist() {
   const [products, setProducts] = useState(null);
-  useEffect(() => { api.get('/wishlist').then((d) => setProducts(d.products)).catch(() => setProducts([])); }, []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const showLoading = useDelayedLoading(loading);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+    api.get('/wishlist')
+      .then((d) => { if (active) setProducts(d.products); })
+      .catch((err) => { if (active) setError(err.message || 'Could not load your wishlist.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [attempt]);
 
   const remove = async (id) => {
     await api.del(`/wishlist/${id}`);
-    setProducts(products.filter((p) => p._id !== id));
+    setProducts((previous) => previous.filter((p) => p._id !== id));
   };
 
   return (
@@ -19,7 +33,8 @@ export default function Wishlist() {
       <SEO page="wishlist" title="My Wishlist | Sulax Shoes Nepal" />
       <div className="wishlist-container">
         <h1>❤️ My Wishlist</h1>
-        {products === null ? <LoadingScreen message="Loading your wishlist..." compact /> : products.length > 0 ? (
+        {error && <p role="alert">{error} <button className="link-button" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></p>}
+        {products === null ? (showLoading ? <ProductGridSkeleton className="wishlist-grid" count={4} /> : null) : products.length > 0 ? (
           <div className="wishlist-grid">
             {products.map((p) => (
               <div className="wishlist-card" key={p._id}>
