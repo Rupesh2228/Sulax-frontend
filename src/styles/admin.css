@@ -1,477 +1,246 @@
+/* ==========================================================================
+   PAGE PATTERNS  (mobile-first)
+   Products grid, Messages chat, Order / Customer detail.
+   ========================================================================== */
 
-/* =========================================
-   SULAX ADMIN DASHBOARD
-   Premium Orange + White Design
-========================================= */
-
-:root {
-  --sulax-orange: #f97316;
-  --sulax-orange-dark: #ea580c;
-  --sulax-orange-light: #fff7ed;
-  --sulax-bg: #f8fafc;
-  --sulax-white: #ffffff;
-  --sulax-text: #1e293b;
-  --sulax-muted: #64748b;
-  --sulax-border: #e2e8f0;
-  --sulax-danger: #ef4444;
-  --sulax-radius: 12px;
-  --sulax-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
-}
-
-/* Base layout */
-.admin-layout,
-.admin-layout * {
-  box-sizing: border-box;
-}
-
-.admin-layout {
-  display: flex;
-  min-height: 100vh;
-  background: var(--sulax-bg);
-  color: var(--sulax-text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Sidebar */
-.admin-sidebar {
-  width: 260px;
-  min-width: 260px;
-  height: 100vh;
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--sulax-white);
-  border-right: 1px solid var(--sulax-border);
-  z-index: 1000;
-  transition: transform 0.25s ease;
-}
-
-.admin-sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid var(--sulax-border);
-}
-
-.admin-sidebar nav {
-  padding: 18px 12px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.admin-sidebar a,
-.admin-sidebar button {
-  transition: all 0.2s ease;
-}
-
-.admin-sidebar nav a {
-  display: flex;
-  align-items: center;
+/* ---------- Products: card grid ---------- */
+.admin-product-grid {
+  display: grid;
   gap: 12px;
-  padding: 12px 14px;
-  margin-bottom: 5px;
-  border-radius: 9px;
-  color: var(--sulax-muted);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
 }
 
-.admin-sidebar nav a:hover {
-  background: var(--sulax-orange-light);
-  color: var(--sulax-orange-dark);
-}
-
-.admin-sidebar nav a.active {
-  color: var(--sulax-orange-dark);
-  background: var(--sulax-orange-light);
-  font-weight: 700;
-  box-shadow: inset 3px 0 var(--sulax-orange);
-}
-
-/* Sidebar footer / admin profile */
-.admin-sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid var(--sulax-border);
-  background: #fff;
-}
-
-.admin-user-name {
-  color: var(--sulax-text);
-  font-size: 13px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.admin-user-role {
-  color: var(--sulax-muted);
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-/* Main content */
-.admin-main-wrap {
-  min-width: 0;
-  flex: 1;
+.admin-product-card {
   display: flex;
   flex-direction: column;
-}
-
-.admin-content {
-  width: 100%;
   min-width: 0;
-  padding: 28px;
-  flex: 1;
+  overflow: hidden;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius);
 }
 
-/* Topbar */
-.admin-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  min-height: 72px;
-  padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid var(--sulax-border);
+.admin-product-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #eef1f6;
+}
+
+.admin-product-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 4px;
+  padding: 10px 12px 12px;
+}
+
+.admin-product-name {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.admin-product-meta {
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--ad-muted);
+}
+
+/* ---------- Order / Customer detail: main column + side column ---------- */
+.admin-detail-grid {
+  display: grid;
   gap: 16px;
-  backdrop-filter: blur(12px);
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.admin-breadcrumb {
-  display: flex;
-  align-items: center;
+/* Label / value rows (address, totals, contact info) */
+.admin-kv {
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
-  min-width: 0;
-  font-size: 13px;
-  color: var(--sulax-muted);
+  margin: 0;
 }
 
-.admin-breadcrumb a {
-  text-decoration: none;
-}
-
-.admin-breadcrumb a:hover {
-  color: var(--sulax-orange-dark);
-}
-
-.admin-breadcrumb .active {
-  color: var(--sulax-text);
-  font-weight: 700;
-}
-
-.admin-topbar-actions {
+.admin-kv > div {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  min-width: 0;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.875rem;
 }
 
-.admin-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #bbf7d0;
-  border-radius: 999px;
-  background: #f0fdf4;
-  color: #15803d;
-  white-space: nowrap;
-  font-size: 12px;
+.admin-kv dt {
+  color: var(--ad-muted);
+}
+
+.admin-kv dd {
+  margin: 0;
   font-weight: 600;
+  text-align: right;
 }
 
-.admin-status-dot {
-  width: 7px;
-  height: 7px;
-  background: #22c55e;
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px #dcfce7;
+/* ---------- Messages: conversation list + thread ----------
+   Phones show one pane at a time. Add .is-thread-open to .admin-chat once a
+   conversation is selected; the "back" button should remove it. */
+.admin-chat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  height: calc(100dvh - var(--ad-topbar-h) - (var(--ad-gutter) * 2) - env(safe-area-inset-top, 0px));
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius);
 }
 
-.admin-view-store-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1px solid var(--sulax-border);
-  border-radius: 9px;
-  background: white;
-  color: var(--sulax-text);
-  text-decoration: none;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s ease;
+.admin-chat-list,
+.admin-chat-thread {
+  min-height: 0;
 }
 
-.admin-view-store-btn:hover {
-  color: var(--sulax-orange-dark);
-  border-color: #fdba74;
-  background: var(--sulax-orange-light);
-  transform: translateY(-1px);
+.admin-chat-list {
+  overflow-y: auto;
 }
 
-/* Dashboard cards */
-.admin-content .dashboard-card,
-.admin-content .stat-card,
-.admin-content .admin-card {
-  min-width: 0;
-  background: white;
-  border: 1px solid var(--sulax-border);
-  border-radius: var(--sulax-radius);
-  padding: 22px;
-  box-shadow: var(--sulax-shadow);
-  transition: border-color 0.2s, box-shadow 0.2s;
+.admin-chat-thread {
+  display: none;
+  flex-direction: column;
 }
 
-.admin-content .dashboard-card:hover,
-.admin-content .stat-card:hover,
-.admin-content .admin-card:hover {
-  border-color: #fed7aa;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
-}
-
-/* Buttons */
-.admin-content button,
-.admin-content .btn {
-  min-height: 38px;
-  border-radius: 8px;
-  font-family: inherit;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s, transform 0.2s;
-}
-
-.admin-content button:focus-visible,
-.admin-sidebar a:focus-visible,
-.admin-topbar a:focus-visible {
-  outline: 3px solid #fdba74;
-  outline-offset: 3px;
-}
-
-.admin-content .btn-primary {
-  background: var(--sulax-orange);
-  color: white;
-  border: 1px solid var(--sulax-orange);
-}
-
-.admin-content .btn-primary:hover {
-  background: var(--sulax-orange-dark);
-}
-
-/* Inputs */
-.admin-content input,
-.admin-content select,
-.admin-content textarea {
-  max-width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: white;
-  color: var(--sulax-text);
-  font: inherit;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.admin-content input:focus,
-.admin-content select:focus,
-.admin-content textarea:focus {
-  border-color: var(--sulax-orange);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
-}
-
-/* Tables: prevent layout breaking on phones */
-.admin-content .table-wrapper,
-.admin-content .table-responsive {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--sulax-border);
-  border-radius: 10px;
-  background: white;
-}
-
-.admin-content table {
-  width: 100%;
-  border-collapse: collapse;
-  white-space: nowrap;
-}
-
-.admin-content th {
-  background: #f8fafc;
-  color: var(--sulax-muted);
-  text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.admin-content th,
-.admin-content td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--sulax-border);
-}
-
-.admin-content tbody tr:hover {
-  background: #fffaf5;
-}
-
-/* Mobile overlay: hidden on desktop */
-.admin-sidebar-overlay {
+.admin-chat.is-thread-open .admin-chat-list {
   display: none;
 }
 
-/* Tablet */
-@media (max-width: 1024px) {
-  .admin-sidebar {
-    width: 230px;
-    min-width: 230px;
-  }
-
-  .admin-content {
-    padding: 22px;
-  }
-
-  .admin-topbar {
-    padding: 14px 20px;
-  }
-
-  .admin-status-pill {
-    display: none;
-  }
+.admin-chat.is-thread-open .admin-chat-thread {
+  display: flex;
 }
 
-/* Mobile navigation */
-@media (max-width: 768px) {
-  .admin-sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: min(290px, 85vw);
-    min-width: 0;
-    height: 100dvh;
-    transform: translateX(-105%);
-    box-shadow: none;
-    z-index: 1200;
+.admin-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--ad-line);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-chat-item.is-active {
+  background: var(--ad-accent-soft);
+}
+
+.admin-chat-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ad-line);
+}
+
+.admin-chat-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ad-radius-sm);
+  background: transparent;
+  color: var(--ad-text);
+  cursor: pointer;
+}
+
+.admin-chat-messages {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-bubble {
+  align-self: flex-start;
+  max-width: min(82%, 520px);
+  padding: 8px 12px;
+  border-radius: 14px 14px 14px 4px;
+  background: #eef1f6;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-bubble--me {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--ad-accent);
+  color: #ffffff;
+}
+
+.admin-chat-composer {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--ad-line);
+}
+
+.admin-chat-composer .admin-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Tablet (>= 768px)
+   ========================================================================== */
+@media (min-width: 768px) {
+  .admin-product-grid {
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
-  .admin-sidebar.mobile-open {
-    transform: translateX(0);
-    box-shadow: 12px 0 35px rgba(15, 23, 42, 0.12);
+  .admin-chat {
+    grid-template-columns: 300px minmax(0, 1fr);
   }
 
-  .admin-sidebar-overlay.visible {
+  .admin-chat-list {
+    border-right: 1px solid var(--ad-line);
+  }
+
+  /* both panes always visible */
+  .admin-chat-thread,
+  .admin-chat.is-thread-open .admin-chat-thread {
+    display: flex;
+  }
+
+  .admin-chat.is-thread-open .admin-chat-list {
     display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(2px);
-    z-index: 1100;
   }
 
-  .admin-topbar {
-    min-height: 62px;
-    padding: 12px 14px;
-    gap: 10px;
-  }
-
-  .admin-topbar-actions {
-    gap: 8px;
-  }
-
-  .admin-breadcrumb {
-    gap: 6px;
-    font-size: 12px;
-  }
-
-  .admin-view-store-btn {
-    padding: 9px;
-  }
-
-  .admin-view-store-btn span {
+  .admin-chat-back {
     display: none;
   }
-
-  .admin-content {
-    padding: 16px 12px;
-  }
-
-  .admin-content .dashboard-card,
-  .admin-content .stat-card,
-  .admin-content .admin-card {
-    padding: 16px;
-  }
-
-  .admin-content .dashboard-grid,
-  .admin-content .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
-/* Small phones */
-@media (max-width: 480px) {
-  .admin-topbar {
-    padding: 10px;
+/* ==========================================================================
+   Desktop (>= 1024px)
+   ========================================================================== */
+@media (min-width: 1024px) {
+  .admin-detail-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    align-items: start;
   }
 
-  .admin-breadcrumb {
-    max-width: 45%;
-    overflow-wrap: anywhere;
-  }
-
-  .admin-topbar-actions {
-    gap: 6px;
-  }
-
-  .admin-content {
-    padding: 12px 10px;
-  }
-
-  .admin-content .dashboard-grid,
-  .admin-content .stats-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .admin-content .dashboard-card,
-  .admin-content .stat-card,
-  .admin-content .admin-card {
-    padding: 14px;
-    border-radius: 10px;
-  }
-
-  .admin-content th,
-  .admin-content td {
-    padding: 11px 12px;
-  }
-
-  .admin-sidebar nav a {
-    padding: 13px 12px;
-  }
-
-  .admin-sidebar-footer {
-    padding: 14px;
-  }
-}
-
-/* Reduced motion accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .admin-layout *,
-  .admin-layout *::before,
-  .admin-layout *::after {
-    transition: none !important;
-    animation: none !important;
-    scroll-behavior: auto !important;
+  .admin-chat {
+    grid-template-columns: 340px minmax(0, 1fr);
+    height: calc(100dvh - var(--ad-topbar-h) - (var(--ad-gutter) * 2));
   }
 }
