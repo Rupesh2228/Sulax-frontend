@@ -81,3 +81,87 @@
 .pg-product .related-grid{grid-template-columns:1fr}
 .pg-product .reviews-section{padding:0 12px}
 .pg-product .review-box,.pg-product .review-list-box{padding:18px}}
+
+.pg-product {
+    padding-top: 1px;
+    background: linear-gradient(180deg, #fffaf7 0%, #f4f6f8 520px);
+}
+.pg-product .details-wrap,
+.pg-product .reviews-section {
+    width: min(100%, 1240px);
+}
+.pg-product .product-main,
+.pg-product .review-box,
+.pg-product .review-list-box {
+    border: 1px solid #e5e8ed;
+    border-radius: 16px;
+    box-shadow: 0 8px 26px rgba(28, 39, 54, .055);
+}
+.pg-product .product-main {
+    gap: clamp(24px, 4vw, 48px);
+}
+.pg-product .main-image {
+    aspect-ratio: 1 / 1;
+    height: auto;
+    max-height: 520px;
+    border: 1px solid #eceff3;
+    background: #f7f8fa;
+}
+.pg-product .info h1 {
+    color: #202631;
+    font-size: clamp(25px, 3vw, 36px);
+    line-height: 1.2;
+    letter-spacing: -.035em;
+}
+.pg-product .meta { color: #697382; }
+.pg-product .current-price { color: #c84408; }
+.pg-product .size-btn {
+    min-width: 48px;
+    min-height: 42px;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 650;
+}
+.pg-product .size-btn:focus-visible,
+.pg-product .star-btn:focus-visible {
+    outline: 3px solid rgba(233, 84, 10, .35);
+    outline-offset: 2px;
+}
+.pg-product .qty-box {
+    border-color: #dfe3e9;
+    border-radius: 9px;
+}
+.pg-product .actions button,
+.pg-product .wishlist-btn {
+    min-height: 44px;
+    border-radius: 9px;
+    font-weight: 700;
+}
+.pg-product .add-cart {
+    background: #e9540a;
+}
+.pg-product .add-cart:hover:not(:disabled) { background: #c84408; }
+.pg-product .related-card {
+    border: 1px solid #e7eaf0;
+    border-radius: 13px;
+    box-shadow: 0 5px 18px rgba(28, 39, 54, .05);
+}
+.pg-product .review-layout { gap: 18px; }
+.pg-product .review-box,
+.pg-product .review-list-box {
+    border-radius: 15px;
+}
+.pg-product .review-box::before,
+.pg-product .review-list-box::before { display: none; }
+.pg-product .review-submit { border-radius: 9px; }
+.pg-product .review-item { border-radius: 12px; }
+
+@media (max-width: 700px) {
+    .pg-product .details-wrap,
+    .pg-product .reviews-section { padding-right: 14px; padding-left: 14px; }
+    .pg-product .product-main { gap: 22px; }
+    .pg-product .main-image { max-height: 390px; }
+    .pg-product .actions { display: grid; grid-template-columns: 1fr; }
+    .pg-product .actions button,
+    .pg-product .actions .wishlist-btn { width: 100%; }
+}

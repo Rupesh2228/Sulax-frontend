@@ -56,3 +56,72 @@
 @media(max-width: 700px){.pg-account .menu{
                 grid-template-columns: 1fr;
             }}
+
+.pg-account {
+    flex: 1 0 auto;
+    background: linear-gradient(180deg, #fffaf7 0%, #f4f6f8 100%);
+}
+.pg-account .container {
+    width: min(100%, 1080px);
+    margin: 42px auto;
+}
+.pg-account .profile,
+.pg-account .menu a {
+    border: 1px solid #e7eaf0;
+    border-radius: 16px;
+    box-shadow: 0 8px 26px rgba(28, 39, 54, .055);
+}
+.pg-account .profile {
+    padding: clamp(22px, 4vw, 34px);
+}
+.pg-account .profile-icon {
+    display: grid;
+    width: 62px;
+    height: 62px;
+    margin-bottom: 14px;
+    place-items: center;
+    border-radius: 18px;
+    background: #fff0e8;
+    font-size: 32px;
+}
+.pg-account .profile h2 {
+    margin-bottom: 10px;
+    color: #202631;
+    font-size: clamp(22px, 3vw, 28px);
+}
+.pg-account .profile p {
+    margin-top: 8px;
+    color: #697382;
+    overflow-wrap: anywhere;
+}
+.pg-account .profile p strong { color: #303946; }
+.pg-account .menu {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    gap: 14px;
+}
+.pg-account .menu a {
+    display: flex;
+    min-height: 142px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 22px;
+    font-weight: 700;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.pg-account .menu a:hover {
+    transform: translateY(-2px);
+    border-color: #ffc29f;
+    background: #fffaf7;
+    box-shadow: 0 12px 28px rgba(28, 39, 54, .09);
+}
+.pg-account .menu-icon {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    margin-bottom: 10px;
+    border-radius: 14px;
+    background: #fff2eb;
+    color: #c84408;
+}

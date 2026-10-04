@@ -55,3 +55,50 @@
     .pg-order td::before{content: attr(data-label); display:block; font-weight:700; color:#374151; margin-bottom:4px}
     .pg-order .box{padding:18px 16px}
 }
+
+.pg-order {
+    padding: 1px 0 44px;
+}
+.pg-order .container {
+    width: min(100%, 1020px);
+    margin: 36px auto;
+}
+.pg-order .container > p:first-child a {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+}
+.pg-order .box {
+    border: 1px solid #e5e8ed;
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 8px 26px rgba(28, 39, 54, .055);
+}
+.pg-order .box:hover {
+    transform: none;
+    box-shadow: 0 8px 26px rgba(28, 39, 54, .07);
+}
+.pg-order .box h2 {
+    color: #202631;
+    font-size: 19px;
+}
+.pg-order .box p { overflow-wrap: anywhere; }
+.pg-order th {
+    background: #f6f7f9;
+    color: #616b79;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.pg-order .status {
+    border: 1px solid #f5dda6;
+    background: #fff8e6;
+    color: #855900;
+    font-size: 12px;
+}
+.pg-order td a { overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+    .pg-order .container { margin: 25px auto; padding: 0 14px; }
+    .pg-order td { overflow-wrap: anywhere; }
+}

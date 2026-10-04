@@ -14,6 +14,7 @@ export default function MyOrders() {
   const [msg, setMsg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
+  const [cancellingId, setCancellingId] = useState('');
   const showLoading = useDelayedLoading(loading);
 
   useEffect(() => {
@@ -28,12 +29,18 @@ export default function MyOrders() {
   }, [attempt]);
 
   const cancel = async (id) => {
+    if (cancellingId) return;
     if (!window.confirm('Cancel this order?')) return;
+    setCancellingId(id);
     try {
       const d = await api.post(`/orders/${id}/cancel`);
       setOrders((previous) => previous.map((o) => (o._id === id ? d.order : o)));
       setMsg({ ok: true, text: d.message });
-    } catch (e) { setMsg({ ok: false, text: e.message || 'The order could not be cancelled.' }); }
+    } catch (e) {
+      setMsg({ ok: false, text: e.message || 'The order could not be cancelled.' });
+    } finally {
+      setCancellingId('');
+    }
   };
 
   return (
@@ -61,7 +68,9 @@ export default function MyOrders() {
                       <div className="order-actions">
                         <Link className="view-btn" to={`/my-orders/${o._id}`}>View Details</Link>
                         {o.status === 'Pending' && (
-                          <button type="button" className="cancel-order-btn" onClick={() => cancel(o._id)}>Cancel</button>
+                          <button type="button" className="cancel-order-btn" disabled={Boolean(cancellingId)} onClick={() => cancel(o._id)}>
+                            {cancellingId === o._id ? 'Cancelling…' : 'Cancel'}
+                          </button>
                         )}
                       </div>
                     </td>

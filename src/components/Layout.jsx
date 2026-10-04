@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
@@ -10,6 +10,10 @@ export default function Layout() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [search, setSearch] = useState(params.get('search') || '');
+
+  useEffect(() => {
+    setSearch(params.get('search') || '');
+  }, [params]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -52,7 +56,7 @@ export default function Layout() {
             <span aria-hidden="true" style={{ fontSize: 38 }}>👟</span>
             <div><h1>SULAX</h1><span>SHOES COLLECTION</span></div>
           </Link>
-          <form className="search-box" onSubmit={submit}>
+          <form className="search-box" onSubmit={submit} role="search">
             <input type="search" value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search shoes and styles..." aria-label="Search products" />
             <button type="submit" aria-label="Search">⌕</button>
@@ -86,39 +90,31 @@ export default function Layout() {
 
       <Outlet />
 
-      <footer className="site-footer" style={{ backgroundColor: '#222', color: '#ccc', padding: '40px 20px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-          <div style={{ flex: '1 1 200px' }}>
-            <h3 style={{ color: '#fff', marginBottom: '15px' }}>SULAX SHOES COLLECTION</h3>
-            <p style={{ margin: '5px 0' }}>📍 Location: Kathmandu, Nepal</p>
-            <p style={{ margin: '5px 0' }}>📞 Phone: +977-9812345678</p>
-            <p style={{ margin: '5px 0' }}>✉️ Email: info@sulaxshoes.com</p>
+      <footer className="site-footer">
+        <div className="site-footer__content">
+          <div className="site-footer__brand">
+            <h2>SULAX SHOES COLLECTION</h2>
+            <p>Kathmandu, Nepal</p>
+            <a href="tel:+9779812345678">+977-9812345678</a>
+            <a href="mailto:info@sulaxshoes.com">info@sulaxshoes.com</a>
           </div>
           
-          <div style={{ flex: '1 1 200px' }}>
-            <h3 style={{ color: '#fff', marginBottom: '15px' }}>Quick Links</h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px' }}><Link to="/" style={{ color: '#ccc', textDecoration: 'none' }}>Home</Link></li>
-              <li style={{ marginBottom: '10px' }}><Link to="/cart" style={{ color: '#ccc', textDecoration: 'none' }}>Cart</Link></li>
-              <li style={{ marginBottom: '10px' }}>
-                <Link to={user?.role === 'admin' ? '/sulax-itnb-admain' : '/account'} style={{ color: '#ccc', textDecoration: 'none' }}>
-                  {user?.role === 'admin' ? 'Admin Dashboard' : 'My Account'}
-                </Link>
-              </li>
-            </ul>
+          <div className="site-footer__column">
+            <h3>Explore</h3>
+            <Link to="/">Shop all shoes</Link>
+            <Link to="/cart">Shopping cart</Link>
+            <Link to={user?.role === 'admin' ? '/sulax-itnb-admain' : user ? '/account' : '/login'}>
+              {user?.role === 'admin' ? 'Admin dashboard' : user ? 'My account' : 'Sign in'}
+            </Link>
           </div>
           
-          <div style={{ flex: '1 1 200px' }}>
-            <h3 style={{ color: '#fff', marginBottom: '15px' }}>Customer Service</h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px' }}><Link to="/my-orders" style={{ color: '#ccc', textDecoration: 'none' }}>Track Orders</Link></li>
-              <li style={{ marginBottom: '10px' }}><Link to="/wishlist" style={{ color: '#ccc', textDecoration: 'none' }}>Wishlist</Link></li>
-              <li style={{ marginBottom: '10px' }}>Shipping & Returns</li>
-              <li style={{ marginBottom: '10px' }}>FAQ</li>
-            </ul>
+          <div className="site-footer__column">
+            <h3>Step into your style</h3>
+            <p>Discover footwear for your everyday plans and special moments.</p>
+            <Link to="/contact">Questions? Get in touch <span aria-hidden="true">→</span></Link>
           </div>
         </div>
-        <div style={{ textAlign: 'center', borderTop: '1px solid #444', paddingTop: '20px', fontSize: '0.9em' }}>
+        <div className="site-footer__bottom">
           <p>&copy; {new Date().getFullYear()} Sulax Shoes Collection. All rights reserved.</p>
         </div>
       </footer>

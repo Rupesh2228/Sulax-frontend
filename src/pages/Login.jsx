@@ -38,11 +38,12 @@ export default function Login() {
         {state?.registered && <div className="success-message">Registration successful.</div>}
         {error && <div className="error-message" role="alert">{error}</div>}
         <form onSubmit={submit}>
-          <label>Email</label>
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" autoComplete="email" />
-          <label>Password</label>
+          <label htmlFor="login-email">Email</label>
+          <input id="login-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" autoComplete="email" />
+          <label htmlFor="login-password">Password</label>
           <div style={{ position: 'relative' }}>
             <input
+              id="login-password"
               type={showPassword ? 'text' : 'password'}
               required
               value={password}
@@ -53,6 +54,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              className="password-visibility-toggle"
               style={{
                 position: 'absolute',
                 right: 8,

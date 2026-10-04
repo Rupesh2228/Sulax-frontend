@@ -11,6 +11,8 @@ export default function Wishlist() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [removingId, setRemovingId] = useState('');
+  const [actionError, setActionError] = useState('');
   const showLoading = useDelayedLoading(loading);
   useEffect(() => {
     let active = true;
@@ -24,8 +26,17 @@ export default function Wishlist() {
   }, [attempt]);
 
   const remove = async (id) => {
-    await api.del(`/wishlist/${id}`);
-    setProducts((previous) => previous.filter((p) => p._id !== id));
+    if (removingId) return;
+    setRemovingId(id);
+    setActionError('');
+    try {
+      await api.del(`/wishlist/${id}`);
+      setProducts((previous) => previous.filter((p) => p._id !== id));
+    } catch (err) {
+      setActionError(err.message || 'Could not remove this item from your wishlist.');
+    } finally {
+      setRemovingId('');
+    }
   };
 
   return (
@@ -34,6 +45,7 @@ export default function Wishlist() {
       <div className="wishlist-container">
         <h1>❤️ My Wishlist</h1>
         {error && <p role="alert">{error} <button className="link-button" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></p>}
+        {actionError && <p className="wishlist-action-error" role="alert">{actionError}</p>}
         {products === null ? (showLoading ? <ProductGridSkeleton className="wishlist-grid" count={4} /> : null) : products.length > 0 ? (
           <div className="wishlist-grid">
             {products.map((p) => (
@@ -47,7 +59,9 @@ export default function Wishlist() {
                   {p.oldPrice > 0 && <span className="old-price">Rs. {money(p.oldPrice)}</span>}
                   <div className="buttons">
                     <Link className="view-btn" to={`/product/${p._id}`}>View</Link>
-                    <button type="button" className="remove-btn" onClick={() => remove(p._id)}>Remove</button>
+                    <button type="button" className="remove-btn" disabled={Boolean(removingId)} onClick={() => remove(p._id)}>
+                      {removingId === p._id ? 'Removing…' : 'Remove'}
+                    </button>
                   </div>
                 </div>
               </div>

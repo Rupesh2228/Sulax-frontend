@@ -8,8 +8,6 @@ export default function AdminBanners() {
   const [attempt, setAttempt] = useState(0);
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState('');
-  const [alt, setAlt] = useState('');
-  const [link, setLink] = useState('');
   const [imageError, setImageError] = useState('');
   const [saving, setSaving] = useState(false);
   const [busyBanner, setBusyBanner] = useState('');
@@ -78,15 +76,11 @@ export default function AdminBanners() {
 
     const form = new FormData();
     form.append('image', imageFile);
-    form.append('alt', alt.trim());
-    form.append('link', link.trim());
     try {
       setSaving(true);
       const data = await api.post('/admin/banners', form);
       setBanners((current) => [...current, data.banner]);
       setImageFile(null);
-      setAlt('');
-      setLink('');
       const input = document.getElementById('banner-image');
       if (input) input.value = '';
       showNotice('Banner added to the homepage carousel.');
@@ -154,28 +148,6 @@ export default function AdminBanners() {
 
           {preview && <img className="banner-upload-preview" src={preview} alt="Selected banner preview" />}
 
-          <div className="banner-form-fields">
-            <label>
-              Image description
-              <input
-                type="text"
-                maxLength={200}
-                value={alt}
-                onChange={(event) => setAlt(event.target.value)}
-                placeholder="Example: Summer collection promotion"
-              />
-            </label>
-            <label>
-              Optional click-through link
-              <input
-                type="text"
-                maxLength={500}
-                value={link}
-                onChange={(event) => setLink(event.target.value)}
-                placeholder="/?category=Running or https://example.com"
-              />
-            </label>
-          </div>
           <button type="submit" className="admin-btn admin-btn-primary" disabled={saving}>
             {saving ? 'Uploading banner…' : 'Upload banner'}
           </button>
@@ -205,8 +177,6 @@ export default function AdminBanners() {
                 <img src={banner.image} alt={banner.alt || `Homepage banner ${index + 1}`} />
                 <div className="banner-admin-details">
                   <strong>Banner {index + 1}</strong>
-                  <span>{banner.alt || 'No image description'}</span>
-                  {banner.link && <small>{banner.link}</small>}
                   <span className={`admin-pill ${banner.isActive ? 'pill-green' : 'pill-gray'}`}>
                     {banner.isActive ? 'Visible' : 'Hidden'}
                   </span>
