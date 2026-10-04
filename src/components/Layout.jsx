@@ -69,20 +69,25 @@ export default function Layout() {
                   className="nav-icon"
                   title={user.role === 'admin' ? 'Dashboard' : 'My Account'}
                 >
-                  {user.role === 'admin' ? '📊' : '👤'}
-                  <span>{user.role === 'admin' ? 'Dashboard' : 'Account'}</span>
+                  <span className="nav-icon-glyph" aria-hidden="true">{user.role === 'admin' ? '📊' : '👤'}</span>
+                  <span className="nav-icon-label">{user.role === 'admin' ? 'Dashboard' : 'Account'}</span>
                 </NavLink>
                 {user.role !== 'admin' && (
-                  <NavLink to="/wishlist" className="nav-icon">♡<span>Wishlist</span></NavLink>
+                  <NavLink to="/wishlist" className="nav-icon">
+                    <span className="nav-icon-glyph" aria-hidden="true">♡</span>
+                    <span className="nav-icon-label">Wishlist</span>
+                  </NavLink>
                 )}
               </>
             ) : (
               <NavLink to="/login" className="nav-icon" title="Login / Register">
-                👤<span>Account</span>
+                <span className="nav-icon-glyph" aria-hidden="true">👤</span>
+                <span className="nav-icon-label">Account</span>
               </NavLink>
             )}
             <Link to="/cart" className="nav-icon cart-icon" aria-label="Shopping cart">
-              🛒<span className="cart-count" id="cartCount">{count}</span>
+              <span className="nav-icon-glyph" aria-hidden="true">🛒</span>
+              <span className="cart-count" id="cartCount">{count}</span>
             </Link>
           </nav>
         </div>
@@ -94,9 +99,9 @@ export default function Layout() {
         <div className="site-footer__content">
           <div className="site-footer__brand">
             <h2>SULAX SHOES COLLECTION</h2>
-            <p>Kathmandu, Nepal</p>
-            <a href="tel:+9779812345678">+977-9812345678</a>
-            <a href="mailto:info@sulaxshoes.com">info@sulaxshoes.com</a>
+            <p>Mangalbazar, Patan, Lalitpur</p>
+            <a href="tel:+9779808780888">9808780888</a>
+            <a href="mailto:Sumintheguy099@gmail.com">Sumintheguy099@gmail.com</a>
           </div>
           
           <div className="site-footer__column">

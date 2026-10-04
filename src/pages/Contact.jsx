@@ -32,9 +32,9 @@ export default function Contact() {
         <div className="contact-card">
           <h1>Contact Us</h1>
           <p>Have a question about our shoes, delivery or orders? Send us a message.</p>
-          <div className="contact-detail"><div><strong>Address</strong><br />Kathmandu, Nepal</div></div>
-          <div className="contact-detail"><div><strong>Phone</strong><br /><a href="tel:+9779812345678">+977-9812345678</a></div></div>
-          <div className="contact-detail"><div><strong>Email</strong><br /><a href="mailto:info@sulaxshoes.com">info@sulaxshoes.com</a></div></div>
+          <div className="contact-detail"><div><strong>Address</strong><br />Mangalbazar, Patan, Lalitpur</div></div>
+          <div className="contact-detail"><div><strong>Phone</strong><br /><a href="tel:+9779808780888">9808780888</a></div></div>
+          <div className="contact-detail"><div><strong>Email</strong><br /><a href="mailto:Sumintheguy099@gmail.com">Sumintheguy099@gmail.com</a></div></div>
         </div>
         <div className="contact-card">
           <h2>Send a Message</h2>

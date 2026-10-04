@@ -862,7 +862,7 @@ footer {
             repeat(3, 1fr);
     }
 
-    .nav-icons .nav-icon:not(.cart-icon) span {
+    .nav-icons .nav-icon:not(.cart-icon) .nav-icon-label {
         display: none;
     }
 
@@ -3031,8 +3031,8 @@ footer {
 
 .top-container {
     max-width: 1320px;
-    min-height: 36px;
-    font-size: 12px;
+    min-height: 44px;
+    font-size: 14px;
 }
 
 .top-links {
@@ -3043,7 +3043,8 @@ footer {
 .top-links a,
 .top-links button {
     color: #fff;
-    font-size: 12px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .navbar {
@@ -3090,8 +3091,45 @@ footer {
 .nav-icon {
     min-width: 38px;
     color: #fff;
+    font-size: 14px;
+    font-weight: 600;
     text-decoration: none;
     transition: opacity .15s ease, transform .15s ease;
+}
+
+.nav-icons {
+    gap: 22px;
+}
+
+.nav-icons .nav-icon:not(.cart-icon) {
+    min-width: 76px;
+    gap: 4px;
+}
+
+.nav-icon-glyph {
+    font-size: 25px;
+    line-height: 1;
+}
+
+.nav-icon-label {
+    font-size: 14px;
+    line-height: 1.15;
+}
+
+.nav-icons .cart-icon {
+    font-size: 30px;
+}
+
+.nav-icons .cart-icon .nav-icon-glyph {
+    font-size: 30px;
+}
+
+.nav-icons .cart-count {
+    top: -5px;
+    right: -9px;
+    width: 21px;
+    height: 21px;
+    font-size: 12px;
 }
 
 .nav-icon:hover {
@@ -3255,16 +3293,22 @@ footer {
     .nav-container { gap: 14px; }
     .search-box { order: 3; }
     .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nav-icons .nav-icon-label { display: none; }
+    .nav-icons .nav-icon:not(.cart-icon) { min-width: 38px; }
 }
 
 @media (max-width: 520px) {
-    .top-container { gap: 8px; padding: 7px 14px; }
-    .top-container > span { font-size: 10px; }
-    .top-links { gap: 10px; }
+    .top-container { gap: 8px; min-height: 42px; padding: 7px 14px; }
+    .top-container > span { font-size: 13px; }
+    .top-links { gap: 14px; }
     .top-links a,
-    .top-links button { font-size: 10px; }
+    .top-links button { font-size: 13px; }
     .nav-container { padding: 0 14px; }
     .search-box { height: 43px; }
+    .nav-icons { gap: 15px; }
+    .nav-icons .nav-icon:not(.cart-icon) { min-width: 40px; }
+    .nav-icons .cart-icon { font-size: 27px; }
+    .nav-icons .cart-icon .nav-icon-glyph { font-size: 27px; }
     .section { padding-right: 14px; padding-left: 14px; }
     .product-grid { gap: 11px; }
     .product-info { padding: 11px; }
