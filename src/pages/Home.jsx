@@ -21,8 +21,38 @@ export default function Home() {
   const [error, setError] = useState('');
   const [categoriesAttempt, setCategoriesAttempt] = useState(0);
   const [productsAttempt, setProductsAttempt] = useState(0);
+  const [banners, setBanners] = useState([]);
+  const [activeBanner, setActiveBanner] = useState(0);
+  const [isBannerPlaying, setIsBannerPlaying] = useState(
+    () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const [bannersError, setBannersError] = useState('');
+  const [bannersAttempt, setBannersAttempt] = useState(0);
   const showCategoriesLoading = useDelayedLoading(categoriesLoading);
   const showProductsLoading = useDelayedLoading(productsLoading || productsFetching);
+
+  useEffect(() => {
+    let active = true;
+    setBannersError('');
+    api.get('/banners')
+      .then((data) => {
+        if (!active) return;
+        setBanners(data.banners || []);
+        setActiveBanner(0);
+      })
+      .catch((err) => {
+        if (active) setBannersError(err.message || 'Could not load homepage banners.');
+      });
+    return () => { active = false; };
+  }, [bannersAttempt]);
+
+  useEffect(() => {
+    if (banners.length < 2 || !isBannerPlaying) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveBanner((index) => (index + 1) % banners.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [banners.length, isBannerPlaying]);
 
   useEffect(() => {
     let active = true;
@@ -72,17 +102,62 @@ export default function Home() {
       </nav>
 
       <main>
-        <section className="hero">
-          <div className="hero-content">
-            <div className="hero-text">
-              <p className="hero-small">SULAX SHOES COLLECTION</p>
-              <h2>Find your next everyday pair.</h2>
-              <p>Comfortable fits, fresh styles, and a little more confidence in every step.</p>
-              <a className="shop-btn" href="#products">Shop the collection <span aria-hidden="true">→</span></a>
-            </div>
-            <div className="hero-shoe" aria-hidden="true"><div className="shoe-circle">👟</div></div>
-          </div>
-        </section>
+        {(banners.length > 0 || bannersError) && (
+          <section className="hero banner-carousel" aria-label="Store promotions">
+            {banners.length > 0 ? (
+              <>
+                <div className="banner-carousel__slide">
+                  {banners[activeBanner].link ? (
+                    <a href={banners[activeBanner].link} aria-label={banners[activeBanner].alt || 'View promotion'}>
+                      <img src={banners[activeBanner].image} alt={banners[activeBanner].alt || 'Sulax Shoes promotion'} />
+                    </a>
+                  ) : (
+                    <img src={banners[activeBanner].image} alt={banners[activeBanner].alt || 'Sulax Shoes promotion'} />
+                  )}
+                </div>
+                {banners.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="banner-carousel__arrow banner-carousel__arrow--previous"
+                      aria-label="Show previous banner"
+                      onClick={() => setActiveBanner((index) => (index - 1 + banners.length) % banners.length)}
+                    >‹</button>
+                    <button
+                      type="button"
+                      className="banner-carousel__arrow banner-carousel__arrow--next"
+                      aria-label="Show next banner"
+                      onClick={() => setActiveBanner((index) => (index + 1) % banners.length)}
+                    >›</button>
+                    <div className="banner-carousel__dots" role="group" aria-label="Choose a banner">
+                      {banners.map((banner, index) => (
+                        <button
+                          type="button"
+                          key={banner._id}
+                          className={index === activeBanner ? 'is-active' : ''}
+                          aria-label={`Show banner ${index + 1}`}
+                          aria-current={index === activeBanner ? 'true' : undefined}
+                          onClick={() => setActiveBanner(index)}
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        className="banner-carousel__toggle"
+                        aria-label={isBannerPlaying ? 'Pause banner rotation' : 'Play banner rotation'}
+                        aria-pressed={!isBannerPlaying}
+                        onClick={() => setIsBannerPlaying((playing) => !playing)}
+                      >{isBannerPlaying ? 'Ⅱ' : '▶'}</button>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className="banner-carousel__error" role="status">
+                {bannersError} <button className="link-button" type="button" onClick={() => setBannersAttempt((attempt) => attempt + 1)}>Retry</button>
+              </p>
+            )}
+          </section>
+        )}
 
         <section className="section products-section" id="products">
           <div className="section-title product-heading">

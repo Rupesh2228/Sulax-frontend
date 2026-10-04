@@ -52,6 +52,7 @@ export default function AdminDashboard() {
   else if (path.includes('/sulax-itnb-admain/customers')) pageTitle = 'Customer Directory';
   else if (path.includes('/sulax-itnb-admain/messages')) pageTitle = 'Customer Support Messaging';
   else if (path.includes('/sulax-itnb-admain/seo')) pageTitle = 'SEO & Metadata Manager';
+  else if (path.includes('/sulax-itnb-admain/banners')) pageTitle = 'Homepage Banners';
 
   return (
     <div className={`admin-shell${sidebarOpen ? ' admin-shell--drawer-open' : ''}`}>
@@ -131,6 +132,10 @@ export default function AdminDashboard() {
           <NavLink to="/sulax-itnb-admain/seo" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <SeoIcon size={18} />
             <span>SEO & Meta Tags</span>
+          </NavLink>
+          <NavLink to="/sulax-itnb-admain/banners" onClick={() => setSidebarOpen(false)} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+            <span aria-hidden="true">🖼️</span>
+            <span>Homepage Banners</span>
           </NavLink>
         </nav>
 

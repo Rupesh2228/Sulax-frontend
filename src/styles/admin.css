@@ -806,3 +806,79 @@
     height: calc(100dvh - var(--ad-topbar-h) - (var(--ad-gutter) * 2));
   }
 }
+
+.banner-upload-form {
+  display: grid;
+  gap: 16px;
+}
+.banner-file-field,
+.banner-form-fields label {
+  display: grid;
+  gap: 7px;
+  color: #404040;
+  font-size: 12px;
+  font-weight: 650;
+}
+.banner-file-field input,
+.banner-form-fields input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #262626;
+  font: inherit;
+}
+.banner-file-field input[type="file"] { padding: 7px; }
+.banner-file-field small { color: var(--ad-muted); font-weight: 400; }
+.banner-form-error { color: #b91c1c; font-weight: 500; }
+.banner-upload-preview {
+  display: block;
+  width: min(100%, 720px);
+  max-height: 240px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  object-fit: contain;
+}
+.banner-form-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.banner-admin-list { display: grid; }
+.banner-admin-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 30%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-top: 1px solid #f0f1f3;
+}
+.banner-admin-item > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2.8 / 1;
+  border-radius: 7px;
+  background: #f3f4f6;
+  object-fit: cover;
+}
+.banner-admin-details {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-width: 0;
+  color: #737373;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.banner-admin-details strong { color: #262626; font-size: 13px; }
+.banner-admin-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.pill-green { background: #ecfdf3; color: #15803d; }
+
+@media (max-width: 700px) {
+  .banner-form-fields { grid-template-columns: minmax(0, 1fr); }
+  .banner-admin-item { grid-template-columns: minmax(0, 1fr); gap: 11px; padding: 14px; }
+  .banner-admin-item > img { max-height: 190px; }
+  .banner-admin-actions { justify-content: flex-start; }
+}

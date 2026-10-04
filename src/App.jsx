@@ -21,6 +21,7 @@ import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminCustomers from './pages/admin/AdminCustomers.jsx';
 import AdminSEO from './pages/admin/AdminSEO.jsx';
+import AdminBanners from './pages/admin/AdminBanners.jsx';
 import AdminMessages from './pages/admin/AdminMessages.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="customers" element={<AdminCustomers />} />
         <Route path="messages" element={<AdminMessages />} />
         <Route path="seo" element={<AdminSEO />} />
+        <Route path="banners" element={<AdminBanners />} />
       </Route>
 
       <Route element={<Layout />}>
