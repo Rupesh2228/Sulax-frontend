@@ -100,7 +100,7 @@ export default function Layout() {
             <h2>SULAX SHOES COLLECTION</h2>
             <p>Mangalbazar, Patan, Lalitpur</p>
             <a href="tel:+9779808780888">9808780888</a>
-            <a href="mailto:maharjan2228rupesh@gmail.com">maharjan2228rupesh@gmail.com</a>
+            <a href="mailto:Sumintheguy099@gmail.com">Sumintheguy099@gmail.com</a>
           </div>
           
           <div className="site-footer__column">
