@@ -89,9 +89,18 @@ a {
 .logo {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: white;
+    justify-content: center;
     min-width: 210px;
+    color: white;
+}
+
+.logo-image {
+    display: block;
+    width: 170px;
+    height: auto;
+    max-height: 90px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.08));
 }
 
 .logo > i {

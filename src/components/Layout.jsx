@@ -52,9 +52,8 @@ export default function Layout() {
 
       <header className="navbar">
         <div className="nav-container">
-          <Link to="/" className="logo">
-            <span aria-hidden="true" style={{ fontSize: 38 }}>👟</span>
-            <div><h1>SULAX</h1><span>SHOES COLLECTION</span></div>
+          <Link to="/" className="logo" aria-label="Sulax Shoes Collection home">
+            <img src="/logo.png" alt="Sulax Shoes Collection" className="logo-image" />
           </Link>
           <form className="search-box" onSubmit={submit} role="search">
             <input type="search" value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)}

@@ -82,12 +82,21 @@ export default function ProductDetails() {
   }
 
   const { product, related } = data;
-  const stock = Math.max(0, product.stock);
+  const sizeStock = (selectedSize) => {
+    if (!Array.isArray(product?.sizes)) return Math.max(0, Number(product?.stock) || 0);
+    const match = product.sizes.find((entry) => String(entry.size) === String(selectedSize));
+    return Math.max(0, Number(match?.stock) || 0);
+  };
+  const totalStock = Math.max(0, product.sizes?.reduce((sum, entry) => sum + Math.max(0, Number(entry.stock) || 0), 0) || Number(product.stock) || 0);
   const rounded = Math.round(product.rating);
 
   const add = () => {
+    if (!size) {
+      setMsg({ text: 'Please select a shoe size.', ok: false });
+      return false;
+    }
     const err = addItem(product, size, qty);
-    setMsg(err ? { text: err, ok: false } : { text: 'Product added to cart!', ok: true });
+    setMsg(err ? { text: err, ok: false } : { text: `Added size ${size} to cart.`, ok: true });
     return !err;
   };
   const buyNow = () => { if (add()) navigate('/cart'); };
@@ -128,7 +137,7 @@ export default function ProductDetails() {
             '@type': 'Offer',
             priceCurrency: 'NPR',
             price: product.price,
-            availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           },
           aggregateRating:
             product.ratingCount > 0
@@ -145,7 +154,9 @@ export default function ProductDetails() {
         <section className="product-main">
           <div className="gallery">
             <div className="main-image">
-              {product.image ? <img src={imgUrl(product.image)} alt={product.name} /> : <div className="image-placeholder">👟</div>}
+              {(product.images && product.images.length > 0 ? product.images[0].url : product.image) ? (
+                <img src={imgUrl(product.images && product.images.length > 0 ? product.images[0].url : product.image)} alt={product.name} />
+              ) : <div className="image-placeholder">👟</div>}
             </div>
           </div>
 
@@ -161,34 +172,47 @@ export default function ProductDetails() {
               {product.discount > 0 && <span className="discount-badge">-{product.discount}%</span>}
             </div>
             <div className="section">
-              <strong className={stock > 0 ? 'stock-good' : 'stock-out'}>
-                {stock > 0 ? `✓ In Stock — ${stock} available` : '✕ Out of Stock'}
+              <strong className={totalStock > 0 ? 'stock-good' : 'stock-out'}>
+                {totalStock > 0 ? `✓ In Stock — ${totalStock} available` : '✕ Out of Stock'}
               </strong>
             </div>
 
             <div className="section">
               <h3>Select Size</h3>
               <div className="sizes">
-                {SIZES.map((s) => (
-                  <button key={s} type="button" className={`size-btn${size === s ? ' selected' : ''}`} onClick={() => { setSize(s); setMsg({ text: '' }); }}>{s}</button>
-                ))}
+                {SIZES.map((s) => {
+                  const available = sizeStock(s);
+                  const buttonDisabled = available <= 0;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`size-btn${size === s ? ' selected' : ''}${buttonDisabled ? ' disabled' : ''}`}
+                      onClick={() => { if (!buttonDisabled) { setSize(s); setMsg({ text: '' }); } }}
+                      disabled={buttonDisabled}
+                      aria-label={`${s} size ${available > 0 ? 'available' : 'out of stock'}`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div className="section">
               <h3>Quantity</h3>
               <div className="qty-box">
-                <button type="button" onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
-                <input type="number" value={qty} min="1" max={Math.max(1, stock)} readOnly />
-                <button type="button" onClick={() => setQty(Math.min(Math.max(1, stock), qty + 1))}>+</button>
+                <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} disabled={!size || sizeStock(size) <= 0}>−</button>
+                <input type="number" value={qty} min="1" max={Math.max(1, size ? sizeStock(size) : 0)} readOnly />
+                <button type="button" onClick={() => setQty(Math.min(Math.max(1, size ? sizeStock(size) : 1), qty + 1))} disabled={!size || sizeStock(size) <= 0}>+</button>
               </div>
             </div>
 
             {msg.text && <p role="status" style={{ color: msg.ok ? '#176b2c' : '#dc3545', margin: '8px 0' }}>{msg.text}</p>}
 
             <div className="actions">
-              <button type="button" className="buy-now" onClick={buyNow} disabled={stock <= 0}>⚡ Buy Now</button>
-              <button type="button" className="add-cart" onClick={add} disabled={stock <= 0}>🛒 {stock > 0 ? 'Add to Cart' : 'Out of Stock'}</button>
+              <button type="button" className="buy-now" onClick={buyNow} disabled={totalStock <= 0 || !size}>⚡ Buy Now</button>
+              <button type="button" className="add-cart" onClick={add} disabled={totalStock <= 0 || !size}>🛒 {totalStock > 0 ? 'Add to Cart' : 'Out of Stock'}</button>
               <button type="button" className="wishlist-btn" onClick={wishlist}>❤️ Wishlist</button>
             </div>
 

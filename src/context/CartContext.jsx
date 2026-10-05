@@ -5,6 +5,12 @@ export const useCart = () => useContext(CartContext);
 const KEY = 'sulaxCart';
 const SIZES = ['6', '7', '8', '9', '10', '11'];
 
+const getSizeStock = (product, size) => {
+  if (!product || !Array.isArray(product.sizes)) return Math.max(0, Number(product?.stock) || 0);
+  const match = product.sizes.find((entry) => String(entry.size) === String(size));
+  return Math.max(0, Number(match?.stock) || 0);
+};
+
 // The cart lives in the browser (like the original), but is treated as UNTRUSTED input:
 // we sanitise what we read, and the server re-prices everything when the order is placed.
 function load() {
@@ -37,16 +43,19 @@ export function CartProvider({ children }) {
   // returns an error string, or null on success
   const addItem = (product, size, quantity) => {
     if (!size) return 'Please select a shoe size.';
-    if (product.stock <= 0) return 'This product is out of stock.';
+    const available = getSizeStock(product, size);
+    if (available <= 0) return 'This size is out of stock.';
+
     const existing = items.find((i) => i.id === product._id && i.size === size);
     const newQty = (existing?.quantity || 0) + quantity;
-    if (newQty > product.stock) return `Only ${product.stock} items are available.`;
+    if (newQty > available) return `Only ${available} item(s) are available for size ${size}.`;
+
     if (existing) {
-      setItems(items.map((i) => (i === existing ? { ...i, quantity: newQty, stock: product.stock } : i)));
+      setItems(items.map((i) => (i === existing ? { ...i, quantity: newQty, stock: available } : i)));
     } else {
       setItems([...items, {
         id: product._id, name: product.name, price: product.price, image: product.image || '',
-        size, quantity, stock: product.stock,
+        size, quantity, stock: available,
       }]);
     }
     return null;
