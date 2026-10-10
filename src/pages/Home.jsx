@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard.jsx';
 import { CategorySkeleton, ProductGridSkeleton } from '../components/Skeletons.jsx';
 import SEO from '../components/SEO.jsx';
 import useDelayedLoading from '../hooks/useDelayedLoading.js';
+import '../styles/pages/Home.css';
 
 export default function Home() {
   const [params, setParams] = useSearchParams();
