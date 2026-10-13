@@ -3,7 +3,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const CartContext = createContext(null);
 export const useCart = () => useContext(CartContext);
 const KEY = 'sulaxCart';
-const SIZES = ['6', '7', '8', '9', '10', '11'];
 
 const getSizeStock = (product, size) => {
   if (!product || !Array.isArray(product.sizes) || product.sizes.length === 0) {
@@ -25,13 +24,13 @@ function load() {
     const data = JSON.parse(localStorage.getItem(KEY));
     if (!Array.isArray(data)) return [];
     return data
-      .filter((i) => i && /^[a-f\d]{24}$/i.test(String(i.id)) && SIZES.includes(String(i.size)))
+      .filter((i) => i && /^[a-f\d]{24}$/i.test(String(i.id)) && String(i.size || '').trim().length <= 20 && String(i.size || '').trim().length > 0)
       .map((i) => ({
         id: String(i.id),
         name: String(i.name || '').slice(0, 200),
         price: Number(i.price) || 0,
         image: String(i.image || ''),
-        size: String(i.size),
+        size: String(i.size).trim(),
         stock: Math.max(0, Number(i.stock) || 0),
         quantity: Math.min(20, Math.max(1, Math.floor(Number(i.quantity) || 1))),
       }));

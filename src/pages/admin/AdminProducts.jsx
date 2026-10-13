@@ -5,7 +5,7 @@ import { TableSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const CATEGORY_PRESETS = ['Sneakers', 'Running', 'Boots', 'Formal', 'Sandals', 'Casual', 'Sports'];
-const SHOE_SIZES = ['6', '7', '8', '9', '10', '11'];
+const MAX_PRODUCT_SIZES = 30;
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -28,9 +28,7 @@ export default function AdminProducts() {
   const [formData, setFormData] = useState({
     name: '',
     category: 'Sneakers',
-    price: '',
     oldPrice: '',
-    discount: '',
     sizes: [],
     description: '',
   });
@@ -100,9 +98,7 @@ export default function AdminProducts() {
     setFormData({
       name: '',
       category: 'Sneakers',
-      price: '',
       oldPrice: '',
-      discount: '',
       sizes: [],
       description: '',
     });
@@ -119,9 +115,7 @@ export default function AdminProducts() {
     setFormData({
       name: p.name || '',
       category: p.category || 'Sneakers',
-      price: p.price ?? '',
       oldPrice: p.oldPrice ?? '',
-      discount: p.discount ?? '',
       sizes: (p.sizes || []).map((entry) => ({
         size: String(entry.size),
         price: entry.price ?? p.price ?? '',
@@ -133,24 +127,6 @@ export default function AdminProducts() {
     setPreviewUrl(p.image ? imgUrl(p.image) : '');
     setFormErrors({});
     setIsModalOpen(true);
-  };
-
-  // Auto calculate discount
-  const handlePriceChange = (priceVal, oldPriceVal) => {
-    const p = parseFloat(priceVal) || 0;
-    const op = parseFloat(oldPriceVal) || 0;
-    let disc = formData.discount;
-    if (op > p && p > 0) {
-      disc = Math.round(((op - p) / op) * 100);
-    } else if (op <= p) {
-      disc = 0;
-    }
-    setFormData((prev) => ({
-      ...prev,
-      price: priceVal,
-      oldPrice: oldPriceVal,
-      discount: disc,
-    }));
   };
 
   const handleFileChange = (e) => {
@@ -174,8 +150,10 @@ export default function AdminProducts() {
     if (formData.sizes.length === 0) errors.sizes = 'Add at least one shoe size with a price and stock quantity.';
     const seenSizes = new Set();
     formData.sizes.forEach((entry, index) => {
-      if (seenSizes.has(entry.size)) errors.sizes = 'Each shoe size can only be added once.';
-      seenSizes.add(entry.size);
+      const normalizedSize = entry.size.trim().toLocaleLowerCase();
+      if (!normalizedSize) errors[`sizeLabel${index}`] = 'Enter a shoe size.';
+      if (seenSizes.has(normalizedSize)) errors.sizes = 'Each shoe size can only be added once.';
+      seenSizes.add(normalizedSize);
       if (entry.price === '' || !Number.isFinite(Number(entry.price)) || Number(entry.price) < 0) {
         errors[`sizePrice${index}`] = 'Enter a valid price for this size.';
       }
@@ -189,11 +167,10 @@ export default function AdminProducts() {
 
   const addSize = () => {
     setFormData((prev) => {
-      const nextSize = SHOE_SIZES.find((size) => !prev.sizes.some((entry) => entry.size === size));
-      if (!nextSize) return prev;
+      if (prev.sizes.length >= MAX_PRODUCT_SIZES) return prev;
       return {
         ...prev,
-        sizes: [...prev.sizes, { size: nextSize, price: prev.price, stock: '0' }],
+        sizes: [...prev.sizes, { size: '', price: prev.sizes[0]?.price || '', stock: '0' }],
       };
     });
     setFormErrors((prev) => ({ ...prev, sizes: null }));
@@ -219,14 +196,16 @@ export default function AdminProducts() {
       data.append('name', formData.name.trim());
       data.append('category', formData.category.trim());
       const sizes = formData.sizes.map((entry) => ({
-        size: entry.size,
+        size: entry.size.trim(),
         price: Number(entry.price),
         stock: Number(entry.stock),
       }));
       const startingPrice = Math.min(...sizes.map((entry) => entry.price));
       data.append('price', String(startingPrice));
       data.append('oldPrice', String(Number(formData.oldPrice || 0)));
-      data.append('discount', String(Number(formData.discount || 0)));
+      data.append('discount', String(formData.oldPrice > startingPrice && startingPrice > 0
+        ? Math.round(((Number(formData.oldPrice) - startingPrice) / Number(formData.oldPrice)) * 100)
+        : 0));
       data.append('stock', String(sizes.reduce((total, entry) => total + entry.stock, 0)));
       data.append('sizes', JSON.stringify(sizes));
       data.append('description', formData.description.trim());
@@ -509,10 +488,10 @@ export default function AdminProducts() {
                     {formErrors.category && <div className="form-error-msg">{formErrors.category}</div>}
                   </div>
 
-                  {/* Price */}
+                  {/* Old Price */}
                   <div className="form-group">
                     <label className="form-label">
-                      Default Price for New Sizes (Rs.)
+                      Original / Old Price (Rs.)
                     </label>
                     <input
                       type="number"
@@ -520,57 +499,23 @@ export default function AdminProducts() {
                       step="any"
                       className="form-input"
                       placeholder="Optional"
-                      value={formData.price}
-                      onChange={(e) => handlePriceChange(e.target.value, formData.oldPrice)}
-                    />
-                    <span className="form-hint">Each size can have its own price below.</span>
-                  </div>
-
-                  {/* Old Price */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      Original / Old Price (Rs.)
-                      <span className="form-hint">Optional</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      className="form-input"
-                      placeholder="e.g. 3999"
                       value={formData.oldPrice}
-                      onChange={(e) => handlePriceChange(formData.price, e.target.value)}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, oldPrice: e.target.value }))}
                     />
-                  </div>
-
-                  {/* Discount */}
-                  <div className="form-group full-width">
-                    <label className="form-label">
-                      Discount %
-                      <span className="form-hint">Auto-calculated or override</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      className="form-input"
-                      placeholder="e.g. 25"
-                      value={formData.discount}
-                      onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
-                    />
+                    <span className="form-hint">Discount is calculated from the lowest size price.</span>
                   </div>
 
                   <div className="form-group full-width admin-size-manager">
                     <div className="admin-size-manager__header">
                       <div>
                         <label className="form-label">Shoe Sizes, Prices & Stock <span style={{ color: '#ef4444' }}>*</span></label>
-                        <p className="admin-size-manager__hint">Customers can buy only the sizes listed here. Total stock is calculated automatically.</p>
+                        <p className="admin-size-manager__hint">Enter any size label, price, and stock. Total stock is calculated automatically.</p>
                       </div>
                       <button
                         type="button"
                         className="admin-btn admin-btn-secondary admin-btn-sm"
                         onClick={addSize}
-                        disabled={formData.sizes.length >= SHOE_SIZES.length}
+                        disabled={formData.sizes.length >= MAX_PRODUCT_SIZES}
                       >
                         + Add size
                       </button>
@@ -579,15 +524,19 @@ export default function AdminProducts() {
                       <div className="admin-size-row" key={`${entry.size}-${index}`}>
                         <div className="form-group">
                           <label className="form-label" htmlFor={`product-size-${index}`}>Size</label>
-                          <select
+                          <input
                             id={`product-size-${index}`}
-                            className="form-select"
+                            type="text"
+                            maxLength={20}
+                            className="form-input"
+                            placeholder="e.g. 42 or UK 8"
                             value={entry.size}
-                            onChange={(e) => updateSize(index, 'size', e.target.value)}
-                          >
-                            {SHOE_SIZES.filter((size) => size === entry.size || !formData.sizes.some((other, otherIndex) => otherIndex !== index && other.size === size))
-                              .map((size) => <option key={size} value={size}>{size}</option>)}
-                          </select>
+                            onChange={(e) => {
+                              updateSize(index, 'size', e.target.value);
+                              setFormErrors((prev) => ({ ...prev, [`sizeLabel${index}`]: null }));
+                            }}
+                          />
+                          {formErrors[`sizeLabel${index}`] && <div className="form-error-msg">{formErrors[`sizeLabel${index}`]}</div>}
                         </div>
                         <div className="form-group">
                           <label className="form-label" htmlFor={`product-size-price-${index}`}>Price (Rs.)</label>
