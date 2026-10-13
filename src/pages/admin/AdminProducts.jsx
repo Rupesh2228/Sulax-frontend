@@ -5,6 +5,7 @@ import { TableSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const CATEGORY_PRESETS = ['Sneakers', 'Running', 'Boots', 'Formal', 'Sandals', 'Casual', 'Sports'];
+const SHOE_SIZES = ['6', '7', '8', '9', '10', '11'];
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -30,7 +31,7 @@ export default function AdminProducts() {
     price: '',
     oldPrice: '',
     discount: '',
-    stock: '',
+    sizes: [],
     description: '',
   });
   const [selectedFile, setSelectedFile] = useState(null);
@@ -102,7 +103,7 @@ export default function AdminProducts() {
       price: '',
       oldPrice: '',
       discount: '',
-      stock: '10',
+      sizes: [],
       description: '',
     });
     setSelectedFile(null);
@@ -121,7 +122,11 @@ export default function AdminProducts() {
       price: p.price ?? '',
       oldPrice: p.oldPrice ?? '',
       discount: p.discount ?? '',
-      stock: p.stock ?? 0,
+      sizes: (p.sizes || []).map((entry) => ({
+        size: String(entry.size),
+        price: entry.price ?? p.price ?? '',
+        stock: entry.stock ?? 0,
+      })),
       description: p.description || '',
     });
     setSelectedFile(null);
@@ -166,14 +171,41 @@ export default function AdminProducts() {
     const errors = {};
     if (!formData.name.trim()) errors.name = 'Product name is required.';
     if (!formData.category.trim()) errors.category = 'Category is required.';
-    if (formData.price === '' || isNaN(formData.price) || Number(formData.price) < 0) {
-      errors.price = 'Valid price is required.';
-    }
-    if (formData.stock === '' || isNaN(formData.stock) || Number(formData.stock) < 0) {
-      errors.stock = 'Valid stock quantity is required.';
-    }
+    if (formData.sizes.length === 0) errors.sizes = 'Add at least one shoe size with a price and stock quantity.';
+    const seenSizes = new Set();
+    formData.sizes.forEach((entry, index) => {
+      if (seenSizes.has(entry.size)) errors.sizes = 'Each shoe size can only be added once.';
+      seenSizes.add(entry.size);
+      if (entry.price === '' || !Number.isFinite(Number(entry.price)) || Number(entry.price) < 0) {
+        errors[`sizePrice${index}`] = 'Enter a valid price for this size.';
+      }
+      if (entry.stock === '' || !Number.isInteger(Number(entry.stock)) || Number(entry.stock) < 0) {
+        errors[`sizeStock${index}`] = 'Enter a valid whole-number stock quantity.';
+      }
+    });
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const addSize = () => {
+    setFormData((prev) => {
+      const nextSize = SHOE_SIZES.find((size) => !prev.sizes.some((entry) => entry.size === size));
+      if (!nextSize) return prev;
+      return {
+        ...prev,
+        sizes: [...prev.sizes, { size: nextSize, price: prev.price, stock: '0' }],
+      };
+    });
+    setFormErrors((prev) => ({ ...prev, sizes: null }));
+  };
+
+  const updateSize = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      sizes: prev.sizes.map((entry, currentIndex) => currentIndex === index
+        ? { ...entry, [field]: value }
+        : entry),
+    }));
   };
 
   // Submit Product (Add or Edit)
@@ -186,10 +218,17 @@ export default function AdminProducts() {
       const data = new FormData();
       data.append('name', formData.name.trim());
       data.append('category', formData.category.trim());
-      data.append('price', String(Number(formData.price)));
+      const sizes = formData.sizes.map((entry) => ({
+        size: entry.size,
+        price: Number(entry.price),
+        stock: Number(entry.stock),
+      }));
+      const startingPrice = Math.min(...sizes.map((entry) => entry.price));
+      data.append('price', String(startingPrice));
       data.append('oldPrice', String(Number(formData.oldPrice || 0)));
       data.append('discount', String(Number(formData.discount || 0)));
-      data.append('stock', String(Number(formData.stock)));
+      data.append('stock', String(sizes.reduce((total, entry) => total + entry.stock, 0)));
+      data.append('sizes', JSON.stringify(sizes));
       data.append('description', formData.description.trim());
 
       if (selectedFile) {
@@ -368,7 +407,12 @@ export default function AdminProducts() {
                       </td>
                       <td>
                         <div>
-                          <strong style={{ color: '#f85606' }}>Rs. {money(p.price)}</strong>
+                          <strong style={{ color: '#f85606' }}>{p.sizes?.length ? 'From ' : ''}Rs. {money(p.price)}</strong>
+                          {p.sizes?.length > 0 && (
+                            <div className="admin-size-price-summary">
+                              {p.sizes.map((entry) => `${entry.size}: Rs. ${money(entry.price ?? p.price)}`).join(' · ')}
+                            </div>
+                          )}
                           {p.oldPrice > p.price && (
                             <div style={{ fontSize: '0.75rem', color: '#9ca3af', textDecoration: 'line-through' }}>
                               Rs. {money(p.oldPrice)}
@@ -465,37 +509,21 @@ export default function AdminProducts() {
                     {formErrors.category && <div className="form-error-msg">{formErrors.category}</div>}
                   </div>
 
-                  {/* Stock */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      Stock Quantity <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      className="form-input"
-                      placeholder="e.g. 25"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    />
-                    {formErrors.stock && <div className="form-error-msg">{formErrors.stock}</div>}
-                  </div>
-
                   {/* Price */}
                   <div className="form-group">
                     <label className="form-label">
-                      Selling Price (Rs.) <span style={{ color: '#ef4444' }}>*</span>
+                      Default Price for New Sizes (Rs.)
                     </label>
                     <input
                       type="number"
                       min="0"
                       step="any"
                       className="form-input"
-                      placeholder="e.g. 2999"
+                      placeholder="Optional"
                       value={formData.price}
                       onChange={(e) => handlePriceChange(e.target.value, formData.oldPrice)}
                     />
-                    {formErrors.price && <div className="form-error-msg">{formErrors.price}</div>}
+                    <span className="form-hint">Each size can have its own price below.</span>
                   </div>
 
                   {/* Old Price */}
@@ -530,6 +558,79 @@ export default function AdminProducts() {
                       value={formData.discount}
                       onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
                     />
+                  </div>
+
+                  <div className="form-group full-width admin-size-manager">
+                    <div className="admin-size-manager__header">
+                      <div>
+                        <label className="form-label">Shoe Sizes, Prices & Stock <span style={{ color: '#ef4444' }}>*</span></label>
+                        <p className="admin-size-manager__hint">Customers can buy only the sizes listed here. Total stock is calculated automatically.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-secondary admin-btn-sm"
+                        onClick={addSize}
+                        disabled={formData.sizes.length >= SHOE_SIZES.length}
+                      >
+                        + Add size
+                      </button>
+                    </div>
+                    {formData.sizes.map((entry, index) => (
+                      <div className="admin-size-row" key={`${entry.size}-${index}`}>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor={`product-size-${index}`}>Size</label>
+                          <select
+                            id={`product-size-${index}`}
+                            className="form-select"
+                            value={entry.size}
+                            onChange={(e) => updateSize(index, 'size', e.target.value)}
+                          >
+                            {SHOE_SIZES.filter((size) => size === entry.size || !formData.sizes.some((other, otherIndex) => otherIndex !== index && other.size === size))
+                              .map((size) => <option key={size} value={size}>{size}</option>)}
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor={`product-size-price-${index}`}>Price (Rs.)</label>
+                          <input
+                            id={`product-size-price-${index}`}
+                            type="number"
+                            min="0"
+                            step="any"
+                            className="form-input"
+                            value={entry.price}
+                            onChange={(e) => updateSize(index, 'price', e.target.value)}
+                          />
+                          {formErrors[`sizePrice${index}`] && <div className="form-error-msg">{formErrors[`sizePrice${index}`]}</div>}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor={`product-size-stock-${index}`}>Stock</label>
+                          <input
+                            id={`product-size-stock-${index}`}
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="form-input"
+                            value={entry.stock}
+                            onChange={(e) => updateSize(index, 'stock', e.target.value)}
+                          />
+                          {formErrors[`sizeStock${index}`] && <div className="form-error-msg">{formErrors[`sizeStock${index}`]}</div>}
+                        </div>
+                        <button
+                          type="button"
+                          className="admin-action-btn delete admin-size-remove"
+                          title={`Remove size ${entry.size}`}
+                          aria-label={`Remove size ${entry.size}`}
+                          onClick={() => setFormData((prev) => ({
+                            ...prev,
+                            sizes: prev.sizes.filter((_, currentIndex) => currentIndex !== index),
+                          }))}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {formErrors.sizes && <div className="form-error-msg" role="alert">{formErrors.sizes}</div>}
+                    {formData.sizes.length === 0 && <p className="admin-size-manager__empty">Add at least one size before saving this product.</p>}
                   </div>
 
                   {/* Image Upload */}

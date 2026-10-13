@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { imgUrl, money } from '../api.js';
 
 export default function ProductCard({ p }) {
+  const price = p.sizes?.length
+    ? Math.min(...p.sizes.map((entry) => Number(entry.price) || Number(p.price) || 0))
+    : p.price;
   return (
     <article className="product-card">
       <Link className="product-image" to={`/product/${p._id}`} aria-label={`View ${p.name}`}>
@@ -12,7 +15,7 @@ export default function ProductCard({ p }) {
         <p className="product-category">{p.category}</p>
         <h3><Link to={`/product/${p._id}`}>{p.name}</Link></h3>
         <p className="rating" aria-label={`Rating ${p.rating.toFixed(1)} out of 5`}>★ {p.rating.toFixed(1)}<span> / 5</span></p>
-        <p className="price">Rs. {money(p.price)}</p>
+        <p className="price">{p.sizes?.length ? 'From ' : ''}Rs. {money(price)}</p>
         {p.oldPrice > 0 && <p className="old-price">Rs. {money(p.oldPrice)}</p>}
         <Link className="add-cart" to={`/product/${p._id}`}>View details</Link>
       </div>

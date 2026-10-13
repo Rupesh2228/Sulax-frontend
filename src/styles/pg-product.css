@@ -13,6 +13,7 @@
 .pg-product .rating-stars{color:#f85606;margin:15px 0}
 .pg-product .price-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
 .pg-product .current-price{font-size:30px;font-weight:700;color:#f85606}
+.pg-product .price-size-hint{color:#697382;font-size:12px}
 .pg-product .old-price{text-decoration:line-through;color:#999}
 .pg-product .discount-badge{background:#e8f7e8;color:#198754;padding:5px 9px;border-radius:5px;font-weight:bold}
 .pg-product .stock-good{color:#198754;font-weight:bold}

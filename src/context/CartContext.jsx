@@ -6,9 +6,16 @@ const KEY = 'sulaxCart';
 const SIZES = ['6', '7', '8', '9', '10', '11'];
 
 const getSizeStock = (product, size) => {
-  if (!product || !Array.isArray(product.sizes)) return Math.max(0, Number(product?.stock) || 0);
+  if (!product || !Array.isArray(product.sizes) || product.sizes.length === 0) {
+    return Math.max(0, Number(product?.stock) || 0);
+  }
   const match = product.sizes.find((entry) => String(entry.size) === String(size));
   return Math.max(0, Number(match?.stock) || 0);
+};
+
+const getSizePrice = (product, size) => {
+  const match = product?.sizes?.find((entry) => String(entry.size) === String(size));
+  return Number.isFinite(Number(match?.price)) ? Number(match.price) : Number(product?.price) || 0;
 };
 
 // The cart lives in the browser (like the original), but is treated as UNTRUSTED input:
@@ -51,10 +58,12 @@ export function CartProvider({ children }) {
     if (newQty > available) return `Only ${available} item(s) are available for size ${size}.`;
 
     if (existing) {
-      setItems(items.map((i) => (i === existing ? { ...i, quantity: newQty, stock: available } : i)));
+      setItems(items.map((i) => (i === existing
+        ? { ...i, price: getSizePrice(product, size), quantity: newQty, stock: available }
+        : i)));
     } else {
       setItems([...items, {
-        id: product._id, name: product.name, price: product.price, image: product.image || '',
+        id: product._id, name: product.name, price: getSizePrice(product, size), image: product.image || '',
         size, quantity, stock: available,
       }]);
     }

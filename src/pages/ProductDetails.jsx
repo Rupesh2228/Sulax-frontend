@@ -83,11 +83,21 @@ export default function ProductDetails() {
 
   const { product, related } = data;
   const sizeStock = (selectedSize) => {
-    if (!Array.isArray(product?.sizes)) return Math.max(0, Number(product?.stock) || 0);
+    if (!Array.isArray(product?.sizes) || product.sizes.length === 0) return Math.max(0, Number(product?.stock) || 0);
     const match = product.sizes.find((entry) => String(entry.size) === String(selectedSize));
     return Math.max(0, Number(match?.stock) || 0);
   };
-  const totalStock = Math.max(0, product.sizes?.reduce((sum, entry) => sum + Math.max(0, Number(entry.stock) || 0), 0) || Number(product.stock) || 0);
+  const totalStock = product.sizes?.length
+    ? product.sizes.reduce((sum, entry) => sum + Math.max(0, Number(entry.stock) || 0), 0)
+    : Math.max(0, Number(product.stock) || 0);
+  const availableSizes = product.sizes?.length ? product.sizes.map((entry) => String(entry.size)) : SIZES;
+  const sizePrice = (selectedSize) => {
+    const entry = product.sizes?.find((item) => String(item.size) === String(selectedSize));
+    return Number.isFinite(Number(entry?.price)) ? Number(entry.price) : Number(product.price) || 0;
+  };
+  const displayPrice = size ? sizePrice(size) : product.sizes?.length
+    ? Math.min(...product.sizes.map((entry) => sizePrice(entry.size)))
+    : product.price;
   const rounded = Math.round(product.rating);
 
   const add = () => {
@@ -122,7 +132,7 @@ export default function ProductDetails() {
       <SEO
         page="product_details"
         title={`${product.name} | Sulax Shoes Nepal`}
-        description={product.description || `Buy ${product.name} at Sulax Shoes Nepal for Rs. ${product.price}. Fast cash on delivery.`}
+        description={product.description || `Buy ${product.name} at Sulax Shoes Nepal for Rs. ${displayPrice}. Fast cash on delivery.`}
         ogTitle={`${product.name} - Sulax Shoes`}
         ogDescription={product.description || `Buy ${product.name} at Sulax Shoes Nepal.`}
         ogImage={product.image ? imgUrl(product.image) : ''}
@@ -136,7 +146,7 @@ export default function ProductDetails() {
           offers: {
             '@type': 'Offer',
             priceCurrency: 'NPR',
-            price: product.price,
+            price: displayPrice,
             availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           },
           aggregateRating:
@@ -167,8 +177,9 @@ export default function ProductDetails() {
               {stars(rounded)}<span style={{ color: '#666', marginLeft: 7 }}>{product.rating.toFixed(1)}/5</span>
             </div>
             <div className="price-row">
-              <span className="current-price">Rs. {money(product.price)}</span>
-              {product.oldPrice > product.price && <span className="old-price">Rs. {money(product.oldPrice)}</span>}
+              <span className="current-price">Rs. {money(displayPrice)}</span>
+              {!size && product.sizes?.length > 0 && <span className="price-size-hint">Starting price</span>}
+              {product.oldPrice > displayPrice && <span className="old-price">Rs. {money(product.oldPrice)}</span>}
               {product.discount > 0 && <span className="discount-badge">-{product.discount}%</span>}
             </div>
             <div className="section">
@@ -180,7 +191,7 @@ export default function ProductDetails() {
             <div className="section">
               <h3>Select Size</h3>
               <div className="sizes">
-                {SIZES.map((s) => {
+                {availableSizes.map((s) => {
                   const available = sizeStock(s);
                   const buttonDisabled = available <= 0;
                   return (
@@ -235,7 +246,11 @@ export default function ProductDetails() {
                   <div className="rc-info">
                     <h3>{r.name}</h3>
                     <div style={{ color: '#f85606' }}>⭐ {r.rating.toFixed(1)}</div>
-                    <p style={{ fontWeight: 'bold' }}>Rs. {money(r.price)}</p>
+                    <p style={{ fontWeight: 'bold' }}>
+                      {r.sizes?.length ? 'From ' : ''}Rs. {money(r.sizes?.length
+                        ? Math.min(...r.sizes.map((entry) => Number(entry.price) || Number(r.price) || 0))
+                        : r.price)}
+                    </p>
                     <Link to={`/product/${r._id}`}>View Product →</Link>
                   </div>
                 </article>
