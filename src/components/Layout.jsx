@@ -30,7 +30,7 @@ export default function Layout() {
     <>
       <div className="top-bar">
         <div className="top-container">
-          <span>Welcome to Sulax Shoes Collection</span>
+          <span>Welcome to Sulax Collection</span>
           <div className="top-links">
             <Link to="/contact">Contact</Link>
             {user ? (
