@@ -1,8 +1,65 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import Cropper from 'react-easy-crop';
 import { api, imgUrl, money } from '../../api.js';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, AlertIcon } from '../../components/admin/AdminIcons.jsx';
 import { TableSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
+
+const rotateSize = (width, height, rotation) => {
+  const radians = (rotation * Math.PI) / 180;
+  return {
+    width: Math.abs(Math.cos(radians) * width) + Math.abs(Math.sin(radians) * height),
+    height: Math.abs(Math.sin(radians) * width) + Math.abs(Math.cos(radians) * height),
+  };
+};
+
+const createCroppedImage = async (imageUrl, cropPixels, rotation) => {
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.src = imageUrl;
+  await image.decode();
+
+  const rotatedSize = rotateSize(image.naturalWidth, image.naturalHeight, rotation);
+  const rotatedCanvas = document.createElement('canvas');
+  rotatedCanvas.width = Math.ceil(rotatedSize.width);
+  rotatedCanvas.height = Math.ceil(rotatedSize.height);
+  const rotatedContext = rotatedCanvas.getContext('2d');
+  if (!rotatedContext) throw new Error('Your browser could not prepare this image for cropping.');
+
+  rotatedContext.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+  rotatedContext.rotate((rotation * Math.PI) / 180);
+  rotatedContext.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+
+  const scale = Math.min(1, 2000 / Math.max(cropPixels.width, cropPixels.height));
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = Math.max(1, Math.round(cropPixels.width * scale));
+  outputCanvas.height = Math.max(1, Math.round(cropPixels.height * scale));
+  const outputContext = outputCanvas.getContext('2d');
+  if (!outputContext) throw new Error('Your browser could not finish cropping this image.');
+
+  outputContext.drawImage(
+    rotatedCanvas,
+    cropPixels.x,
+    cropPixels.y,
+    cropPixels.width,
+    cropPixels.height,
+    0,
+    0,
+    outputCanvas.width,
+    outputCanvas.height
+  );
+  rotatedCanvas.width = 0;
+  rotatedCanvas.height = 0;
+
+  const blob = await new Promise((resolve, reject) => {
+    outputCanvas.toBlob(
+      (result) => result ? resolve(result) : reject(new Error('Could not create the cropped image.')),
+      'image/jpeg',
+      0.9
+    );
+  });
+  return new File([blob], `product-image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+};
 
 const CATEGORY_PRESETS = [
   'Dolls',
@@ -52,6 +109,17 @@ export default function AdminProducts() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropImage, setCropImage] = useState('');
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [aspect, setAspect] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [cropError, setCropError] = useState('');
+  const [cropping, setCropping] = useState(false);
+  const previewObjectUrlRef = useRef('');
+  const pendingCropObjectUrlRef = useRef('');
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -84,6 +152,11 @@ export default function AdminProducts() {
     loadProducts();
   }, []);
 
+  useEffect(() => () => {
+    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+    if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
+  }, []);
+
   // Filtered and sorted products
   const filteredProducts = useMemo(() => {
     return products
@@ -111,6 +184,10 @@ export default function AdminProducts() {
 
   // Open Add Modal
   const openAddModal = () => {
+    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+    previewObjectUrlRef.current = '';
+    if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
+    pendingCropObjectUrlRef.current = '';
     setModalMode('add');
     setCurrentId(null);
     setFormData({
@@ -135,6 +212,10 @@ export default function AdminProducts() {
 
   // Open Edit Modal
   const openEditModal = (p) => {
+    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+    previewObjectUrlRef.current = '';
+    if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
+    pendingCropObjectUrlRef.current = '';
     setModalMode('edit');
     setCurrentId(p._id);
     setFormData({
@@ -163,14 +244,62 @@ export default function AdminProducts() {
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        setFormErrors((prev) => ({ ...prev, image: 'File size must be under 3MB.' }));
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setFormErrors((prev) => ({ ...prev, image: 'Choose a JPG, PNG, or WEBP image.' }));
         return;
       }
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setFormErrors((prev) => ({ ...prev, image: null }));
+      if (file.size > 10 * 1024 * 1024) {
+        setFormErrors((prev) => ({ ...prev, image: 'Image must be 10MB or smaller before cropping.' }));
+        return;
+      }
+      if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
+      const objectUrl = URL.createObjectURL(file);
+      pendingCropObjectUrlRef.current = objectUrl;
+      openCropEditor(objectUrl);
+    }
+  };
+
+  const openCropEditor = (imageUrl) => {
+    setCropImage(imageUrl);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+    setAspect(1);
+    setCropError('');
+    setCroppedAreaPixels(null);
+    setCropOpen(true);
+  };
+
+  const closeCropEditor = () => {
+    if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
+    pendingCropObjectUrlRef.current = '';
+    setCropOpen(false);
+    setCropImage('');
+    setCropError('');
+  };
+
+  const applyCrop = async () => {
+    if (!croppedAreaPixels || !cropImage) {
+      setCropError('Adjust the crop area before applying it.');
+      return;
+    }
+    try {
+      setCropping(true);
+      setCropError('');
+      const croppedFile = await createCroppedImage(cropImage, croppedAreaPixels, rotation);
+      const croppedUrl = URL.createObjectURL(croppedFile);
+      if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = croppedUrl;
+      setSelectedFile(croppedFile);
+      setPreviewUrl(croppedUrl);
+      closeCropEditor();
+      setFormErrors((previous) => ({ ...previous, image: null }));
+    } catch (err) {
+      setCropError(err.message || 'Could not crop this image. Try another image.');
+    } finally {
+      setCropping(false);
     }
   };
 
@@ -565,7 +694,7 @@ export default function AdminProducts() {
                     <div className="admin-size-manager__header">
                       <div>
                         <label className="form-label">Shoe Sizes, Prices & Stock <span style={{ color: '#ef4444' }}>*</span></label>
-                        <p className="admin-size-manager__hint">Enter any size label, price, and stock. Total stock is calculated automatically.</p>
+                        <p className="admin-size-manager__hint">Type any size label you use (for example, EU 42, UK 8, or Custom). Total stock is calculated automatically.</p>
                       </div>
                       <button
                         type="button"
@@ -579,13 +708,13 @@ export default function AdminProducts() {
                     {formData.sizes.map((entry, index) => (
                       <div className="admin-size-row" key={`${entry.size}-${index}`}>
                         <div className="form-group">
-                          <label className="form-label" htmlFor={`product-size-${index}`}>Size</label>
+                          <label className="form-label" htmlFor={`product-size-${index}`}>Type shoe size</label>
                           <input
                             id={`product-size-${index}`}
                             type="text"
                             maxLength={20}
                             className="form-input"
-                            placeholder="e.g. 42 or UK 8"
+                            placeholder="e.g. EU 42, UK 8, Custom"
                             value={entry.size}
                             onChange={(e) => {
                               updateSize(index, 'size', e.target.value);
@@ -654,7 +783,7 @@ export default function AdminProducts() {
                         Click to upload product image
                       </div>
                       <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginTop: '4px' }}>
-                        PNG, JPG, or WEBP up to 3MB
+                        PNG, JPG, or WEBP up to 10MB. Crop before saving.
                       </div>
                     </div>
 
@@ -671,9 +800,21 @@ export default function AdminProducts() {
                         </div>
                         <button
                           type="button"
+                          onClick={() => openCropEditor(previewUrl)}
+                          className="admin-btn admin-btn-secondary admin-btn-sm"
+                          disabled={submitting}
+                        >
+                          Crop image
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
+                            if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+                            previewObjectUrlRef.current = '';
                             setSelectedFile(null);
-                            setPreviewUrl('');
+                            setPreviewUrl(modalMode === 'edit' && currentId
+                              ? imgUrl(products.find((product) => product._id === currentId)?.image || '')
+                              : '');
                           }}
                           className="admin-btn admin-btn-secondary admin-btn-sm"
                         >
@@ -715,6 +856,94 @@ export default function AdminProducts() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {cropOpen && (
+        <div className="admin-crop-backdrop" onClick={() => !cropping && closeCropEditor()}>
+          <div
+            className="admin-crop-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-crop-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="admin-modal-header">
+              <div>
+                <h2 id="admin-crop-title">Crop product image</h2>
+                <p className="admin-crop-description">Move and zoom the image to frame the product.</p>
+              </div>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={closeCropEditor}
+                disabled={cropping}
+                aria-label="Close image crop editor"
+              >
+                ×
+              </button>
+            </div>
+            <div className="admin-crop-area">
+              <Cropper
+                image={cropImage}
+                crop={crop}
+                zoom={zoom}
+                rotation={rotation}
+                aspect={aspect}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onRotationChange={setRotation}
+                onCropComplete={(_area, pixels) => setCroppedAreaPixels(pixels)}
+                showGrid
+                restrictPosition={false}
+              />
+            </div>
+            <div className="admin-crop-controls">
+              <div className="admin-crop-ratios" aria-label="Crop aspect ratio">
+                {[
+                  { label: '1:1', value: 1 },
+                  { label: '4:5', value: 4 / 5 },
+                  { label: '16:9', value: 16 / 9 },
+                ].map((ratio) => (
+                  <button
+                    key={ratio.label}
+                    type="button"
+                    className={`admin-btn admin-btn-sm ${aspect === ratio.value ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
+                    onClick={() => setAspect(ratio.value)}
+                  >
+                    {ratio.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary admin-btn-sm"
+                  onClick={() => setRotation((previous) => (previous + 90) % 360)}
+                >
+                  Rotate 90°
+                </button>
+              </div>
+              <label className="admin-crop-zoom">
+                <span>Zoom</span>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.05"
+                  value={zoom}
+                  onChange={(event) => setZoom(Number(event.target.value))}
+                />
+              </label>
+              {cropError && <div className="form-error-msg" role="alert">{cropError}</div>}
+            </div>
+            <div className="admin-modal-footer">
+              <button type="button" className="admin-btn admin-btn-secondary" onClick={closeCropEditor} disabled={cropping}>
+                Cancel
+              </button>
+              <button type="button" className="admin-btn admin-btn-primary" onClick={applyCrop} disabled={cropping}>
+                {cropping ? 'Cropping…' : 'Apply crop'}
+              </button>
+            </div>
           </div>
         </div>
       )}
