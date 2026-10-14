@@ -694,7 +694,7 @@ export default function AdminProducts() {
                     <div className="admin-size-manager__header">
                       <div>
                         <label className="form-label">Shoe Sizes, Prices & Stock <span style={{ color: '#ef4444' }}>*</span></label>
-                        <p className="admin-size-manager__hint">Type any size label you use (for example, EU 42, UK 8, or Custom). Total stock is calculated automatically.</p>
+                        <p className="admin-size-manager__hint">Enter each size label manually. Total stock is calculated automatically.</p>
                       </div>
                       <button
                         type="button"
@@ -708,13 +708,13 @@ export default function AdminProducts() {
                     {formData.sizes.map((entry, index) => (
                       <div className="admin-size-row" key={`${entry.size}-${index}`}>
                         <div className="form-group">
-                          <label className="form-label" htmlFor={`product-size-${index}`}>Type shoe size</label>
+                          <label className="form-label" htmlFor={`product-size-${index}`}>Size</label>
                           <input
                             id={`product-size-${index}`}
                             type="text"
                             maxLength={20}
                             className="form-input"
-                            placeholder="e.g. EU 42, UK 8, Custom"
+                            placeholder="Enter size"
                             value={entry.size}
                             onChange={(e) => {
                               updateSize(index, 'size', e.target.value);
