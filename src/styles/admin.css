@@ -77,14 +77,11 @@
 
 .admin-brand-link { display: flex; min-width: 0; align-items: center; gap: 11px; }
 .admin-brand-logo-icon {
-  display: grid;
   flex: 0 0 40px;
   width: 40px;
   height: 40px;
-  place-items: center;
-  border-radius: 11px;
-  background: var(--ad-accent);
-  box-shadow: 0 5px 14px rgba(249,115,22,.2);
+  border-radius: 50%;
+  object-fit: cover;
 }
 .admin-brand-text { display: grid; color: #fff; font-size: 17px; font-weight: 750; line-height: 1.1; }
 .admin-brand-badge { margin-top: 5px; color: #a3a3a3; font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; }
@@ -378,6 +375,16 @@
 .admin-size-row .form-group { margin-bottom: 0; }
 .admin-size-remove { margin-top: 25px; font-size: 19px; }
 .admin-size-price-summary { max-width: 230px; margin-top: 3px; color: #737373; font-size: 10px; line-height: 1.5; }
+.admin-product-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.admin-product-image { min-width: 0; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+.admin-product-image > img { display: block; width: 100%; height: 140px; object-fit: contain; background: #f8fafc; }
+.admin-product-image__actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
+.admin-product-image__actions .admin-btn { flex: 1 1 auto; min-width: 0; }
+.admin-product-image__actions input,
+.admin-product-image-add input { display: none; }
+.admin-product-image-add { display: flex; min-height: 190px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border: 1px dashed #cbd5e1; border-radius: 10px; color: #f85606; cursor: pointer; background: #fffaf7; }
+.admin-product-image-add:hover { border-color: #f85606; background: #fff4ec; }
+.admin-product-image-add span { font-size: 25px; }
 .seo-page-tabs { display: flex; gap: 7px; overflow-x: auto; margin: 0 0 18px; padding: 3px 1px 10px; }
 .seo-page-tab { display: inline-flex; min-height: 37px; flex: 0 0 auto; align-items: center; gap: 7px; padding: 0 11px; border: 1px solid var(--ad-line); border-radius: 8px; background: #fff; color: #52525b; font-size: 11px; font-weight: 600; cursor: pointer; }
 .seo-page-tab.active { border-color: #fed7aa; background: #fff7ed; color: #c2410c; }

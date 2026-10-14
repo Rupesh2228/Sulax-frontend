@@ -11,10 +11,11 @@ import {
   SeoIcon,
   StorefrontIcon,
   LogoutIcon,
-  ShoeIcon,
 } from '../components/admin/AdminIcons.jsx';
 import AdminNotificationBell from '../components/admin/AdminNotificationBell.jsx';
 import '../styles/admin.css';
+
+const logoImage = `${import.meta.env.BASE_URL}logo.png`;
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -67,11 +68,9 @@ export default function AdminDashboard() {
       <aside className={`admin-sidebar${sidebarOpen ? ' is-open' : ''}`} id="admin-navigation">
         <div className="admin-sidebar-header">
           <Link to="/sulax-itnb-admain" className="admin-brand-link">
-            <div className="admin-brand-logo-icon">
-              <ShoeIcon size={22} color="#ffffff" />
-            </div>
+            <img src={logoImage} alt="" className="admin-brand-logo-icon" />
             <div className="admin-brand-text">
-              Sulax <span className="admin-brand-badge">Command Center</span>
+              Sulax <span className="admin-brand-badge">Collection</span>
             </div>
           </Link>
           <button

@@ -7,6 +7,7 @@
 .pg-product .image-placeholder{font-size:110px;color:#aaa}
 .pg-product .thumbs{display:flex;gap:10px}
 .pg-product .thumb{width:78px;height:70px;border:2px solid #eee;border-radius:8px;background:#fff;overflow:hidden;cursor:pointer}
+.pg-product .thumb.active{border-color:#f85606}
 .pg-product .thumb img{width:100%;height:100%;object-fit:cover}
 .pg-product .info h1{font-size:32px;margin:0 0 12px}
 .pg-product .meta{display:flex;gap:15px;flex-wrap:wrap;color:#777;font-size:14px}

@@ -10,6 +10,18 @@ import '../styles/pg-product.css';
 
 const SIZES = ['6', '7', '8', '9', '10', '11'];
 const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+const hasSharedStock = (category) => {
+  const normalized = String(category || '').toLocaleLowerCase().replace(/[^a-z]/g, '');
+  return normalized === 'dolls'
+    || normalized.includes('tshirt')
+    || normalized.includes('bagpack')
+    || normalized.includes('backpack')
+    || (normalized.includes('electronic') && normalized.includes('accessor'))
+    || normalized.includes('sari')
+    || normalized.includes('saree')
+    || normalized.includes('kurtha')
+    || normalized.includes('kurta');
+};
 
 const StarRatingInput = ({ value, onChange }) => (
   <div className="star-rating-input" aria-label={`Rating ${value} out of 5 stars`}>
@@ -40,6 +52,7 @@ export default function ProductDetails() {
   const [attempt, setAttempt] = useState(0);
   const showLoading = useDelayedLoading(loading);
   const [size, setSize] = useState('');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [qty, setQty] = useState(1);
   const [msg, setMsg] = useState({ text: '', ok: false });
 
@@ -60,10 +73,17 @@ export default function ProductDetails() {
 
   useEffect(() => {
     let active = true;
-    setData(null); setNotFound(false); setLoadError(''); setLoading(true); setSize(''); setQty(1); setMsg({ text: '' });
+    setData(null); setNotFound(false); setLoadError(''); setLoading(true); setSize(''); setActiveImageIndex(0); setQty(1); setMsg({ text: '' });
     window.scrollTo(0, 0);
     api.get(`/products/${id}`)
-      .then((result) => { if (active) setData(result); })
+      .then((result) => {
+        if (!active) return;
+        setData(result);
+        const item = result.product;
+        if (!item.sizes?.length && !String(item.sizeOptions || '').trim() && hasSharedStock(item.category)) {
+          setSize('Standard');
+        }
+      })
       .catch((error) => {
         if (!active) return;
         if (error.status === 404) setNotFound(true);
@@ -82,15 +102,28 @@ export default function ProductDetails() {
   }
 
   const { product, related } = data;
+  const typedSizeOptions = String(product.sizeOptions || '').split(',').map((item) => item.trim()).filter(Boolean);
+  const productImages = product.images?.length
+    ? product.images.filter((image) => image?.url)
+    : product.image ? [{ url: product.image }] : [];
+  const activeImage = productImages[Math.min(activeImageIndex, Math.max(0, productImages.length - 1))];
   const sizeStock = (selectedSize) => {
-    if (!Array.isArray(product?.sizes) || product.sizes.length === 0) return Math.max(0, Number(product?.stock) || 0);
+    if (!Array.isArray(product?.sizes) || product.sizes.length === 0) {
+      if (typedSizeOptions.length && !typedSizeOptions.includes(String(selectedSize))) return 0;
+      return Math.max(0, Number(product?.stock) || 0);
+    }
     const match = product.sizes.find((entry) => String(entry.size) === String(selectedSize));
     return Math.max(0, Number(match?.stock) || 0);
   };
   const totalStock = product.sizes?.length
     ? product.sizes.reduce((sum, entry) => sum + Math.max(0, Number(entry.stock) || 0), 0)
     : Math.max(0, Number(product.stock) || 0);
-  const availableSizes = product.sizes?.length ? product.sizes.map((entry) => String(entry.size)) : SIZES;
+  const availableSizes = product.sizes?.length
+    ? product.sizes.map((entry) => String(entry.size))
+    : typedSizeOptions.length
+      ? typedSizeOptions
+      : hasSharedStock(product.category) ? ['Standard'] : SIZES;
+  const requiresSizeChoice = product.sizes?.length > 0 || typedSizeOptions.length > 0;
   const sizePrice = (selectedSize) => {
     const entry = product.sizes?.find((item) => String(item.size) === String(selectedSize));
     return Number.isFinite(Number(entry?.price)) ? Number(entry.price) : Number(product.price) || 0;
@@ -135,13 +168,13 @@ export default function ProductDetails() {
         description={product.description || `Buy ${product.name} at Sulax Shoes Nepal for Rs. ${displayPrice}. Fast cash on delivery.`}
         ogTitle={`${product.name} - Sulax Shoes`}
         ogDescription={product.description || `Buy ${product.name} at Sulax Shoes Nepal.`}
-        ogImage={product.image ? imgUrl(product.image) : ''}
+        ogImage={activeImage?.url ? imgUrl(activeImage.url) : ''}
         schema={{
           '@context': 'https://schema.org',
           '@type': 'Product',
           name: product.name,
           description: product.description,
-          image: product.image ? imgUrl(product.image) : undefined,
+          image: productImages.map((image) => imgUrl(image.url)),
           category: product.category,
           offers: {
             '@type': 'Offer',
@@ -164,15 +197,35 @@ export default function ProductDetails() {
         <section className="product-main">
           <div className="gallery">
             <div className="main-image">
-              {(product.images && product.images.length > 0 ? product.images[0].url : product.image) ? (
-                <img src={imgUrl(product.images && product.images.length > 0 ? product.images[0].url : product.image)} alt={product.name} />
+              {activeImage?.url ? (
+                <img src={imgUrl(activeImage.url)} alt={product.name} />
               ) : <div className="image-placeholder">👟</div>}
             </div>
+            {productImages.length > 1 && (
+              <div className="thumbs" aria-label="Product images">
+                {productImages.map((image, index) => (
+                  <button
+                    type="button"
+                    className={`thumb${activeImageIndex === index ? ' active' : ''}`}
+                    key={`${image.public_id || image.url}-${index}`}
+                    onClick={() => setActiveImageIndex(index)}
+                    aria-label={`Show product image ${index + 1}`}
+                    aria-pressed={activeImageIndex === index}
+                  >
+                    <img src={imgUrl(image.url)} alt="" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="info">
             <h1>{product.name}</h1>
-            <div className="meta"><span>Category: {product.category}</span><span>Product #{product._id.slice(-6)}</span></div>
+            <div className="meta">
+              <span>Category: {product.category}</span>
+              {product.bagType && <span>Bag Type: {product.bagType}</span>}
+              <span>Product #{product._id.slice(-6)}</span>
+            </div>
             <div className="rating-stars" aria-label={`Rating ${product.rating} out of 5`}>
               {stars(rounded)}<span style={{ color: '#666', marginLeft: 7 }}>{product.rating.toFixed(1)}/5</span>
             </div>
@@ -188,27 +241,29 @@ export default function ProductDetails() {
               </strong>
             </div>
 
-            <div className="section">
-              <h3>Select Size</h3>
-              <div className="sizes">
-                {availableSizes.map((s) => {
-                  const available = sizeStock(s);
-                  const buttonDisabled = available <= 0;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className={`size-btn${size === s ? ' selected' : ''}${buttonDisabled ? ' disabled' : ''}`}
-                      onClick={() => { if (!buttonDisabled) { setSize(s); setMsg({ text: '' }); } }}
-                      disabled={buttonDisabled}
-                      aria-label={`${s} size ${available > 0 ? 'available' : 'out of stock'}`}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
+            {(requiresSizeChoice || !hasSharedStock(product.category)) && (
+              <div className="section">
+                <h3>Select Size</h3>
+                <div className="sizes">
+                  {availableSizes.map((s) => {
+                    const available = sizeStock(s);
+                    const buttonDisabled = available <= 0;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`size-btn${size === s ? ' selected' : ''}${buttonDisabled ? ' disabled' : ''}`}
+                        onClick={() => { if (!buttonDisabled) { setSize(s); setMsg({ text: '' }); } }}
+                        disabled={buttonDisabled}
+                        aria-label={`${s} size ${available > 0 ? 'available' : 'out of stock'}`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="section">
               <h3>Quantity</h3>

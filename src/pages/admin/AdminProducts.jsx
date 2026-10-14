@@ -63,17 +63,45 @@ const createCroppedImage = async (imageUrl, cropPixels, rotation) => {
 
 const CATEGORY_PRESETS = [
   'Dolls',
-  '3D-Printed Products',
   'T-shirts',
+  'Bag Packs',
+  'Electronic Accessories',
+  'Sari / Kurtha',
+  '3D-Printed Products',
   'Backpacks',
   "Ladies' Bags",
   'Purses and Wallets',
   'Food Products',
-  'Electronic Accessories',
   'Saris',
   'Kurtas',
 ];
 const MAX_PRODUCT_SIZES = 30;
+const MAX_PRODUCT_IMAGES = 3;
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+
+const getCategoryKind = (category) => {
+  const normalized = String(category || '').toLocaleLowerCase().replace(/[^a-z]/g, '');
+  if (normalized === 'dolls') return 'dolls';
+  if (normalized.includes('tshirt')) return 'tshirts';
+  if (normalized.includes('bagpack') || normalized.includes('backpack')) return 'bags';
+  if (normalized.includes('electronic') && normalized.includes('accessor')) return 'electronics';
+  if (normalized.includes('sari') || normalized.includes('saree') || normalized.includes('kurtha') || normalized.includes('kurta')) return 'clothing';
+  return 'standard';
+};
+
+const getProductImageEntries = (product) => {
+  const images = product.images?.length
+    ? product.images
+    : product.image ? [{ url: product.image, public_id: product.imagePublicId || '' }] : [];
+  return images.slice(0, MAX_PRODUCT_IMAGES).map((image, index) => ({
+    url: image.url,
+    public_id: image.public_id || '',
+    existingIndex: index,
+    file: null,
+  }));
+};
+
+const getImagePreviewSource = (url) => url?.startsWith('blob:') ? url : imgUrl(url);
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -99,6 +127,8 @@ export default function AdminProducts() {
     category: 'Dolls',
     subcategory: '',
     brand: '',
+    bagType: '',
+    sizeOptions: '',
     oldPrice: '',
     price: '',
     stock: '',
@@ -107,9 +137,9 @@ export default function AdminProducts() {
     status: 'active',
     featured: false,
   });
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [imageItems, setImageItems] = useState([]);
   const [cropOpen, setCropOpen] = useState(false);
+  const [cropTargetIndex, setCropTargetIndex] = useState(0);
   const [cropImage, setCropImage] = useState('');
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -118,7 +148,7 @@ export default function AdminProducts() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [cropError, setCropError] = useState('');
   const [cropping, setCropping] = useState(false);
-  const previewObjectUrlRef = useRef('');
+  const imagePreviewUrlsRef = useRef(new Set());
   const pendingCropObjectUrlRef = useRef('');
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -133,6 +163,31 @@ export default function AdminProducts() {
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const releaseImagePreviewUrls = () => {
+    imagePreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    imagePreviewUrlsRef.current.clear();
+  };
+
+  const createImagePreviewUrl = (file) => {
+    const url = URL.createObjectURL(file);
+    imagePreviewUrlsRef.current.add(url);
+    return url;
+  };
+
+  const releaseImagePreviewUrl = (url) => {
+    if (!url || !imagePreviewUrlsRef.current.has(url)) return;
+    URL.revokeObjectURL(url);
+    imagePreviewUrlsRef.current.delete(url);
+  };
+
+  const closeProductModal = () => {
+    if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
+    pendingCropObjectUrlRef.current = '';
+    releaseImagePreviewUrls();
+    setImageItems([]);
+    setIsModalOpen(false);
   };
 
   const loadProducts = async () => {
@@ -153,7 +208,7 @@ export default function AdminProducts() {
   }, []);
 
   useEffect(() => () => {
-    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+    imagePreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
   }, []);
 
@@ -184,8 +239,7 @@ export default function AdminProducts() {
 
   // Open Add Modal
   const openAddModal = () => {
-    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
-    previewObjectUrlRef.current = '';
+    releaseImagePreviewUrls();
     if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
     pendingCropObjectUrlRef.current = '';
     setModalMode('add');
@@ -196,6 +250,8 @@ export default function AdminProducts() {
       category: 'Dolls',
       subcategory: '',
       brand: '',
+      bagType: '',
+      sizeOptions: '',
       oldPrice: '',
       price: '',
       stock: '',
@@ -204,16 +260,14 @@ export default function AdminProducts() {
       status: 'active',
       featured: false,
     });
-    setSelectedFile(null);
-    setPreviewUrl('');
+    setImageItems([]);
     setFormErrors({});
     setIsModalOpen(true);
   };
 
   // Open Edit Modal
   const openEditModal = (p) => {
-    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
-    previewObjectUrlRef.current = '';
+    releaseImagePreviewUrls();
     if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
     pendingCropObjectUrlRef.current = '';
     setModalMode('edit');
@@ -224,6 +278,8 @@ export default function AdminProducts() {
       category: p.category || 'Dolls',
       subcategory: p.subcategory || '',
       brand: p.brand || '',
+      bagType: p.bagType || '',
+      sizeOptions: p.sizeOptions || (p.sizes || []).map((entry) => String(entry.size)).join(', '),
       oldPrice: p.oldPrice ?? '',
       price: p.price ?? '',
       stock: p.stock ?? '',
@@ -236,13 +292,12 @@ export default function AdminProducts() {
       status: p.status || 'active',
       featured: Boolean(p.featured),
     });
-    setSelectedFile(null);
-    setPreviewUrl(p.image ? imgUrl(p.image) : '');
+    setImageItems(getProductImageEntries(p));
     setFormErrors({});
     setIsModalOpen(true);
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, targetIndex) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (file) {
@@ -250,19 +305,24 @@ export default function AdminProducts() {
         setFormErrors((prev) => ({ ...prev, image: 'Choose a JPG, PNG, or WEBP image.' }));
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        setFormErrors((prev) => ({ ...prev, image: 'Image must be 10MB or smaller before cropping.' }));
+      if (file.size > MAX_IMAGE_BYTES) {
+        setFormErrors((prev) => ({ ...prev, image: 'Image must be 3MB or smaller.' }));
+        return;
+      }
+      if (targetIndex >= imageItems.length && imageItems.length >= MAX_PRODUCT_IMAGES) {
+        setFormErrors((prev) => ({ ...prev, image: 'You can upload up to 3 product images.' }));
         return;
       }
       if (pendingCropObjectUrlRef.current) URL.revokeObjectURL(pendingCropObjectUrlRef.current);
       const objectUrl = URL.createObjectURL(file);
       pendingCropObjectUrlRef.current = objectUrl;
-      openCropEditor(objectUrl);
+      openCropEditor(objectUrl, targetIndex);
     }
   };
 
-  const openCropEditor = (imageUrl) => {
+  const openCropEditor = (imageUrl, targetIndex) => {
     setCropImage(imageUrl);
+    setCropTargetIndex(targetIndex);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setRotation(0);
@@ -289,11 +349,17 @@ export default function AdminProducts() {
       setCropping(true);
       setCropError('');
       const croppedFile = await createCroppedImage(cropImage, croppedAreaPixels, rotation);
-      const croppedUrl = URL.createObjectURL(croppedFile);
-      if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
-      previewObjectUrlRef.current = croppedUrl;
-      setSelectedFile(croppedFile);
-      setPreviewUrl(croppedUrl);
+      if (croppedFile.size > MAX_IMAGE_BYTES) {
+        throw new Error('The cropped image is larger than 3MB. Adjust the crop or choose another image.');
+      }
+      const croppedUrl = createImagePreviewUrl(croppedFile);
+      const previousImage = imageItems[cropTargetIndex];
+      if (previousImage) releaseImagePreviewUrl(previousImage.url);
+      setImageItems((previous) => {
+        const next = [...previous];
+        next[cropTargetIndex] = { url: croppedUrl, public_id: '', existingIndex: null, file: croppedFile };
+        return next.slice(0, MAX_PRODUCT_IMAGES);
+      });
       closeCropEditor();
       setFormErrors((previous) => ({ ...previous, image: null }));
     } catch (err) {
@@ -303,14 +369,41 @@ export default function AdminProducts() {
     }
   };
 
+  const removeImage = (index) => {
+    const image = imageItems[index];
+    if (image) releaseImagePreviewUrl(image.url);
+    setImageItems((previous) => previous.filter((_, currentIndex) => currentIndex !== index));
+  };
+
   // Validate form
   const validateForm = () => {
     const errors = {};
+    const categoryKind = getCategoryKind(formData.category);
+    const hasSharedStock = categoryKind !== 'standard';
+    const hasTypedSizes = categoryKind === 'tshirts' || categoryKind === 'clothing';
     if (!formData.name.trim()) errors.name = 'Product name is required.';
     if (!formData.category.trim()) errors.category = 'Category is required.';
-    if (Number(formData.price ?? 0) < 0) errors.price = 'Price must be 0 or more.';
-    if (Number(formData.stock ?? 0) < 0) errors.stock = 'Stock must be 0 or more.';
-    if (formData.sizes.length > 0) {
+    if (categoryKind !== 'standard' && !formData.description.trim()) errors.description = 'Product description is required.';
+    if (hasSharedStock) {
+      if (formData.price === '' || !Number.isFinite(Number(formData.price)) || Number(formData.price) < 0) {
+        errors.price = 'Enter a valid price.';
+      }
+      if (formData.stock === '' || !Number.isInteger(Number(formData.stock)) || Number(formData.stock) < 0) {
+        errors.stock = 'Enter a valid whole-number stock quantity.';
+      }
+    } else if (formData.price !== '' && Number(formData.price) < 0) {
+      errors.price = 'Price must be 0 or more.';
+    }
+    if (hasTypedSizes) {
+      const options = formData.sizeOptions.split(',').map((size) => size.trim()).filter(Boolean);
+      if (!options.length) errors.sizeOptions = 'Enter at least one size.';
+      if (options.some((size) => size.length > 20)) errors.sizeOptions = 'Each size must be 20 characters or fewer.';
+      if (new Set(options.map((size) => size.toLocaleLowerCase())).size !== options.length) {
+        errors.sizeOptions = 'Each size can only be entered once.';
+      }
+    }
+    if (!hasSharedStock) {
+      if (!formData.sizes.length) errors.sizes = 'Add at least one size before saving this product.';
       const seenSizes = new Set();
       formData.sizes.forEach((entry, index) => {
         const normalizedSize = String(entry.size || '').trim().toLocaleLowerCase();
@@ -325,6 +418,7 @@ export default function AdminProducts() {
         }
       });
     }
+    if (imageItems.length > MAX_PRODUCT_IMAGES) errors.image = 'You can upload up to 3 product images.';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -334,7 +428,7 @@ export default function AdminProducts() {
       if (prev.sizes.length >= MAX_PRODUCT_SIZES) return prev;
       return {
         ...prev,
-        sizes: [...prev.sizes, { size: '', price: prev.sizes[0]?.price || '', stock: '0' }],
+        sizes: [...prev.sizes, { size: '', price: prev.price || prev.sizes[0]?.price || '', stock: '0' }],
       };
     });
     setFormErrors((prev) => ({ ...prev, sizes: null }));
@@ -357,23 +451,27 @@ export default function AdminProducts() {
     try {
       setSubmitting(true);
       const data = new FormData();
+      const categoryKind = getCategoryKind(formData.category);
+      const hasSharedStock = categoryKind !== 'standard';
       const sanitizedName = formData.name.trim();
       const sanitizedCategory = formData.category.trim();
-      const sizes = formData.sizes.map((entry) => ({
+      const sizes = hasSharedStock ? [] : formData.sizes.map((entry) => ({
         size: String(entry.size || '').trim(),
         price: Number(entry.price || 0),
         stock: Number(entry.stock || 0),
       }));
-      const basePrice = Number(formData.price || (sizes[0]?.price ?? 0));
-      const computedStock = formData.sizes.length > 0
-        ? sizes.reduce((total, entry) => total + Number(entry.stock || 0), 0)
-        : Number(formData.stock || 0);
+      const basePrice = Number(hasSharedStock ? formData.price : formData.price || (sizes[0]?.price ?? 0));
+      const computedStock = hasSharedStock
+        ? Number(formData.stock || 0)
+        : sizes.reduce((total, entry) => total + Number(entry.stock || 0), 0);
 
       data.append('name', sanitizedName);
       data.append('slug', (formData.slug || sanitizedName).trim());
       data.append('category', sanitizedCategory);
       data.append('subcategory', (formData.subcategory || '').trim());
       data.append('brand', (formData.brand || '').trim());
+      data.append('bagType', formData.bagType.trim());
+      data.append('sizeOptions', formData.sizeOptions.trim());
       data.append('price', String(basePrice));
       data.append('oldPrice', String(Number(formData.oldPrice || 0)));
       data.append('stock', String(computedStock));
@@ -395,9 +493,15 @@ export default function AdminProducts() {
           : 0));
       }
 
-      if (selectedFile) {
-        data.append('images', selectedFile);
-      }
+      let uploadIndex = 0;
+      const imageOrder = imageItems.map((item) => {
+        if (item.file) {
+          data.append('images', item.file);
+          return { type: 'upload', index: uploadIndex++ };
+        }
+        return { type: 'existing', index: item.existingIndex };
+      });
+      data.append('imageOrder', JSON.stringify(imageOrder));
 
       if (modalMode === 'add') {
         const res = await api.post('/admin/products', data);
@@ -409,7 +513,7 @@ export default function AdminProducts() {
         showToast('Product updated successfully!');
       }
 
-      setIsModalOpen(false);
+      closeProductModal();
     } catch (err) {
       showToast(err.message || 'Operation failed. Please check form inputs.', 'error');
     } finally {
@@ -434,6 +538,9 @@ export default function AdminProducts() {
   };
 
   const categories = Array.from(new Set([...CATEGORY_PRESETS, ...products.map((p) => p.category)]));
+  const activeCategoryKind = getCategoryKind(formData.category);
+  const usesSharedStock = activeCategoryKind !== 'standard';
+  const usesTypedSizes = activeCategoryKind === 'tshirts' || activeCategoryKind === 'clothing';
 
   return (
     <div className="slide-up">
@@ -449,7 +556,7 @@ export default function AdminProducts() {
       <div className="admin-page-header">
         <div className="admin-page-title">
           <h1>Product Catalog</h1>
-          <p>Manage shoe inventory, pricing, stock levels, and product images.</p>
+          <p>Manage products, categories, inventory, pricing, and images.</p>
         </div>
         <button onClick={openAddModal} className="admin-btn admin-btn-primary">
           <PlusIcon size={16} />
@@ -621,13 +728,13 @@ export default function AdminProducts() {
 
       {/* Add / Edit Product Modal */}
       {isModalOpen && (
-        <div className="admin-modal-backdrop" onClick={() => !submitting && setIsModalOpen(false)}>
+        <div className="admin-modal-backdrop" onClick={() => !submitting && closeProductModal()}>
           <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
               <h2>{modalMode === 'add' ? 'Add New Product' : 'Edit Product'}</h2>
               <button
                 className="admin-modal-close"
-                onClick={() => !submitting && setIsModalOpen(false)}
+                onClick={() => !submitting && closeProductModal()}
                 disabled={submitting}
               >
                 ✕
@@ -663,7 +770,19 @@ export default function AdminProducts() {
                       className="form-input"
                       placeholder="e.g. Sneakers"
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      onChange={(e) => {
+                        const category = e.target.value;
+                        const isSharedStock = getCategoryKind(category) !== 'standard';
+                        setFormData((previous) => ({
+                          ...previous,
+                          category,
+                          sizes: isSharedStock ? [] : previous.sizes,
+                          price: isSharedStock ? previous.price || previous.sizes[0]?.price || '' : previous.price,
+                          stock: isSharedStock
+                            ? previous.stock || previous.sizes.reduce((sum, item) => sum + Number(item.stock || 0), 0)
+                            : previous.stock,
+                        }));
+                      }}
                     />
                     <datalist id="category-suggestions">
                       {categories.map((c) => (
@@ -672,6 +791,74 @@ export default function AdminProducts() {
                     </datalist>
                     {formErrors.category && <div className="form-error-msg">{formErrors.category}</div>}
                   </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="product-price">
+                      {usesSharedStock ? 'Price (NPR)' : 'Default Price for New Sizes (Rs.)'}
+                      {usesSharedStock && <span style={{ color: '#ef4444' }}> *</span>}
+                    </label>
+                    <input
+                      id="product-price"
+                      type="number"
+                      min="0"
+                      step="any"
+                      className="form-input"
+                      placeholder={usesSharedStock ? 'Enter price' : 'Optional'}
+                      value={formData.price}
+                      required={usesSharedStock}
+                      onChange={(e) => setFormData((previous) => ({ ...previous, price: e.target.value }))}
+                    />
+                    {formErrors.price && <div className="form-error-msg">{formErrors.price}</div>}
+                  </div>
+
+                  {usesSharedStock && (
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="product-stock">Stock *</label>
+                      <input
+                        id="product-stock"
+                        type="number"
+                        min="0"
+                        step="1"
+                        className="form-input"
+                        value={formData.stock}
+                        onChange={(e) => setFormData((previous) => ({ ...previous, stock: e.target.value }))}
+                      />
+                      {formErrors.stock && <div className="form-error-msg">{formErrors.stock}</div>}
+                    </div>
+                  )}
+
+                  {usesTypedSizes && (
+                    <div className="form-group full-width">
+                      <label className="form-label" htmlFor="product-size-options">Size *</label>
+                      <input
+                        id="product-size-options"
+                        type="text"
+                        maxLength={500}
+                        className="form-input"
+                        placeholder={activeCategoryKind === 'tshirts'
+                          ? 'Enter sizes (e.g., S, M, L, XL, XXL)'
+                          : 'Enter sizes (e.g., Free Size, S, M, L, XL)'}
+                        value={formData.sizeOptions}
+                        onChange={(e) => setFormData((previous) => ({ ...previous, sizeOptions: e.target.value }))}
+                      />
+                      {formErrors.sizeOptions && <div className="form-error-msg">{formErrors.sizeOptions}</div>}
+                    </div>
+                  )}
+
+                  {activeCategoryKind === 'bags' && (
+                    <div className="form-group full-width">
+                      <label className="form-label" htmlFor="product-bag-type">Bag Type</label>
+                      <input
+                        id="product-bag-type"
+                        type="text"
+                        maxLength={500}
+                        className="form-input"
+                        placeholder="Enter bag type (e.g., School, Travel, Laptop)"
+                        value={formData.bagType}
+                        onChange={(e) => setFormData((previous) => ({ ...previous, bagType: e.target.value }))}
+                      />
+                    </div>
+                  )}
 
                   {/* Old Price */}
                   <div className="form-group">
@@ -687,13 +874,13 @@ export default function AdminProducts() {
                       value={formData.oldPrice}
                       onChange={(e) => setFormData((prev) => ({ ...prev, oldPrice: e.target.value }))}
                     />
-                    <span className="form-hint">Discount is calculated from the lowest size price.</span>
+                    <span className="form-hint">{usesSharedStock ? 'Discount is calculated from the product price.' : 'Discount is calculated from the lowest size price.'}</span>
                   </div>
 
-                  <div className="form-group full-width admin-size-manager">
+                  {!usesSharedStock && <div className="form-group full-width admin-size-manager">
                     <div className="admin-size-manager__header">
                       <div>
-                        <label className="form-label">Shoe Sizes, Prices & Stock <span style={{ color: '#ef4444' }}>*</span></label>
+                        <label className="form-label">Size Variants, Prices & Stock <span style={{ color: '#ef4444' }}>*</span></label>
                         <p className="admin-size-manager__hint">Enter each size label manually. Total stock is calculated automatically.</p>
                       </div>
                       <button
@@ -765,75 +952,77 @@ export default function AdminProducts() {
                     ))}
                     {formErrors.sizes && <div className="form-error-msg" role="alert">{formErrors.sizes}</div>}
                     {formData.sizes.length === 0 && <p className="admin-size-manager__empty">Add at least one size before saving this product.</p>}
-                  </div>
+                  </div>}
 
-                  {/* Image Upload */}
                   <div className="form-group full-width">
-                    <label className="form-label">Product Image</label>
-                    <div className="image-upload-box" onClick={() => document.getElementById('product-image-input').click()}>
-                      <input
-                        id="product-image-input"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        style={{ display: 'none' }}
-                        onChange={handleFileChange}
-                      />
-                      <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>📷</div>
-                      <div style={{ fontWeight: 600, color: '#f85606', fontSize: '0.9rem' }}>
-                        Click to upload product image
-                      </div>
-                      <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginTop: '4px' }}>
-                        PNG, JPG, or WEBP up to 10MB. Crop before saving.
-                      </div>
-                    </div>
-
-                    {previewUrl && (
-                      <div className="image-preview-container">
-                        <img src={previewUrl} alt="Preview" className="image-preview-thumb" />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1f2937' }}>
-                            {selectedFile ? selectedFile.name : 'Current Product Image'}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#10b981' }}>
-                            Ready to save
+                    <label className="form-label">Product Images</label>
+                    <div className="admin-product-images">
+                      {imageItems.map((image, index) => (
+                        <div className="admin-product-image" key={`${image.public_id || image.url}-${index}`}>
+                          <img src={getImagePreviewSource(image.url)} alt={`Product image ${index + 1} preview`} />
+                          <div className="admin-product-image__actions">
+                            <label className="admin-btn admin-btn-secondary admin-btn-sm">
+                              Replace
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(e) => handleFileChange(e, index)}
+                                disabled={submitting}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-secondary admin-btn-sm"
+                              onClick={() => openCropEditor(getImagePreviewSource(image.url), index)}
+                              disabled={submitting}
+                            >
+                              Crop
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-secondary admin-btn-sm"
+                              onClick={() => removeImage(index)}
+                              disabled={submitting}
+                              aria-label={`Remove product image ${index + 1}`}
+                            >
+                              Remove
+                            </button>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => openCropEditor(previewUrl)}
-                          className="admin-btn admin-btn-secondary admin-btn-sm"
-                          disabled={submitting}
-                        >
-                          Crop image
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
-                            previewObjectUrlRef.current = '';
-                            setSelectedFile(null);
-                            setPreviewUrl(modalMode === 'edit' && currentId
-                              ? imgUrl(products.find((product) => product._id === currentId)?.image || '')
-                              : '');
-                          }}
-                          className="admin-btn admin-btn-secondary admin-btn-sm"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    )}
+                      ))}
+                      {imageItems.length < MAX_PRODUCT_IMAGES && (
+                        <label className="admin-product-image-add">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(e) => handleFileChange(e, imageItems.length)}
+                            disabled={submitting}
+                          />
+                          <span aria-hidden="true">📷</span>
+                          <strong>Add image</strong>
+                        </label>
+                      )}
+                    </div>
+                    <p className="form-hint">PNG, JPG, or WEBP up to 3MB each. Add up to 3 images; crop and preview before saving.</p>
                     {formErrors.image && <div className="form-error-msg">{formErrors.image}</div>}
                   </div>
 
                   {/* Description */}
                   <div className="form-group full-width">
-                    <label className="form-label">Product Description</label>
+                    <label className="form-label">
+                      Product Description
+                      {usesSharedStock && <span style={{ color: '#ef4444' }}> *</span>}
+                    </label>
                     <textarea
                       className="form-textarea"
-                      placeholder="Describe features, sole material, fit, and styling tips..."
+                      placeholder={activeCategoryKind === 'standard'
+                        ? 'Describe features, sole material, fit, and styling tips...'
+                        : 'Describe the product features and details...'}
                       value={formData.description}
+                      required={usesSharedStock}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
+                    {formErrors.description && <div className="form-error-msg">{formErrors.description}</div>}
                   </div>
                 </div>
               </div>
@@ -842,7 +1031,7 @@ export default function AdminProducts() {
                 <button
                   type="button"
                   className="admin-btn admin-btn-secondary"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={closeProductModal}
                   disabled={submitting}
                 >
                   Cancel

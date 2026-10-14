@@ -6,6 +6,8 @@ const KEY = 'sulaxCart';
 
 const getSizeStock = (product, size) => {
   if (!product || !Array.isArray(product.sizes) || product.sizes.length === 0) {
+    const sizeOptions = String(product?.sizeOptions || '').split(',').map((value) => value.trim()).filter(Boolean);
+    if (sizeOptions.length && !sizeOptions.includes(String(size))) return 0;
     return Math.max(0, Number(product?.stock) || 0);
   }
   const match = product.sizes.find((entry) => String(entry.size) === String(size));
@@ -53,8 +55,11 @@ export function CartProvider({ children }) {
     if (available <= 0) return 'This size is out of stock.';
 
     const existing = items.find((i) => i.id === product._id && i.size === size);
+    const usedStock = product.sizes?.length
+      ? existing?.quantity || 0
+      : items.filter((item) => item.id === product._id).reduce((total, item) => total + item.quantity, 0);
     const newQty = (existing?.quantity || 0) + quantity;
-    if (newQty > available) return `Only ${available} item(s) are available for size ${size}.`;
+    if (usedStock + quantity > available) return `Only ${available} item(s) are available in total stock.`;
 
     if (existing) {
       setItems(items.map((i) => (i === existing
