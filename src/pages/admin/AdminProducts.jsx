@@ -4,7 +4,18 @@ import { PlusIcon, EditIcon, TrashIcon, SearchIcon, AlertIcon } from '../../comp
 import { TableSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
-const CATEGORY_PRESETS = ['Sneakers', 'Running', 'Boots', 'Formal', 'Sandals', 'Casual', 'Sports'];
+const CATEGORY_PRESETS = [
+  'Dolls',
+  '3D-Printed Products',
+  'T-shirts',
+  'Backpacks',
+  "Ladies' Bags",
+  'Purses and Wallets',
+  'Food Products',
+  'Electronic Accessories',
+  'Saris',
+  'Kurtas',
+];
 const MAX_PRODUCT_SIZES = 30;
 
 export default function AdminProducts() {
@@ -27,10 +38,17 @@ export default function AdminProducts() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Sneakers',
+    slug: '',
+    category: 'Dolls',
+    subcategory: '',
+    brand: '',
     oldPrice: '',
+    price: '',
+    stock: '',
     sizes: [],
     description: '',
+    status: 'active',
+    featured: false,
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -97,10 +115,17 @@ export default function AdminProducts() {
     setCurrentId(null);
     setFormData({
       name: '',
-      category: 'Sneakers',
+      slug: '',
+      category: 'Dolls',
+      subcategory: '',
+      brand: '',
       oldPrice: '',
+      price: '',
+      stock: '',
       sizes: [],
       description: '',
+      status: 'active',
+      featured: false,
     });
     setSelectedFile(null);
     setPreviewUrl('');
@@ -114,14 +139,21 @@ export default function AdminProducts() {
     setCurrentId(p._id);
     setFormData({
       name: p.name || '',
-      category: p.category || 'Sneakers',
+      slug: p.slug || '',
+      category: p.category || 'Dolls',
+      subcategory: p.subcategory || '',
+      brand: p.brand || '',
       oldPrice: p.oldPrice ?? '',
+      price: p.price ?? '',
+      stock: p.stock ?? '',
       sizes: (p.sizes || []).map((entry) => ({
         size: String(entry.size),
         price: entry.price ?? p.price ?? '',
         stock: entry.stock ?? 0,
       })),
       description: p.description || '',
+      status: p.status || 'active',
+      featured: Boolean(p.featured),
     });
     setSelectedFile(null);
     setPreviewUrl(p.image ? imgUrl(p.image) : '');
@@ -147,20 +179,23 @@ export default function AdminProducts() {
     const errors = {};
     if (!formData.name.trim()) errors.name = 'Product name is required.';
     if (!formData.category.trim()) errors.category = 'Category is required.';
-    if (formData.sizes.length === 0) errors.sizes = 'Add at least one shoe size with a price and stock quantity.';
-    const seenSizes = new Set();
-    formData.sizes.forEach((entry, index) => {
-      const normalizedSize = entry.size.trim().toLocaleLowerCase();
-      if (!normalizedSize) errors[`sizeLabel${index}`] = 'Enter a shoe size.';
-      if (seenSizes.has(normalizedSize)) errors.sizes = 'Each shoe size can only be added once.';
-      seenSizes.add(normalizedSize);
-      if (entry.price === '' || !Number.isFinite(Number(entry.price)) || Number(entry.price) < 0) {
-        errors[`sizePrice${index}`] = 'Enter a valid price for this size.';
-      }
-      if (entry.stock === '' || !Number.isInteger(Number(entry.stock)) || Number(entry.stock) < 0) {
-        errors[`sizeStock${index}`] = 'Enter a valid whole-number stock quantity.';
-      }
-    });
+    if (Number(formData.price ?? 0) < 0) errors.price = 'Price must be 0 or more.';
+    if (Number(formData.stock ?? 0) < 0) errors.stock = 'Stock must be 0 or more.';
+    if (formData.sizes.length > 0) {
+      const seenSizes = new Set();
+      formData.sizes.forEach((entry, index) => {
+        const normalizedSize = String(entry.size || '').trim().toLocaleLowerCase();
+        if (!normalizedSize) errors[`sizeLabel${index}`] = 'Enter a size.';
+        if (seenSizes.has(normalizedSize)) errors.sizes = 'Each size can only be added once.';
+        seenSizes.add(normalizedSize);
+        if (entry.price === '' || !Number.isFinite(Number(entry.price)) || Number(entry.price) < 0) {
+          errors[`sizePrice${index}`] = 'Enter a valid price for this size.';
+        }
+        if (entry.stock === '' || !Number.isInteger(Number(entry.stock)) || Number(entry.stock) < 0) {
+          errors[`sizeStock${index}`] = 'Enter a valid whole-number stock quantity.';
+        }
+      });
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -193,25 +228,46 @@ export default function AdminProducts() {
     try {
       setSubmitting(true);
       const data = new FormData();
-      data.append('name', formData.name.trim());
-      data.append('category', formData.category.trim());
+      const sanitizedName = formData.name.trim();
+      const sanitizedCategory = formData.category.trim();
       const sizes = formData.sizes.map((entry) => ({
-        size: entry.size.trim(),
-        price: Number(entry.price),
-        stock: Number(entry.stock),
+        size: String(entry.size || '').trim(),
+        price: Number(entry.price || 0),
+        stock: Number(entry.stock || 0),
       }));
-      const startingPrice = Math.min(...sizes.map((entry) => entry.price));
-      data.append('price', String(startingPrice));
+      const basePrice = Number(formData.price || (sizes[0]?.price ?? 0));
+      const computedStock = formData.sizes.length > 0
+        ? sizes.reduce((total, entry) => total + Number(entry.stock || 0), 0)
+        : Number(formData.stock || 0);
+
+      data.append('name', sanitizedName);
+      data.append('slug', (formData.slug || sanitizedName).trim());
+      data.append('category', sanitizedCategory);
+      data.append('subcategory', (formData.subcategory || '').trim());
+      data.append('brand', (formData.brand || '').trim());
+      data.append('price', String(basePrice));
       data.append('oldPrice', String(Number(formData.oldPrice || 0)));
-      data.append('discount', String(formData.oldPrice > startingPrice && startingPrice > 0
-        ? Math.round(((Number(formData.oldPrice) - startingPrice) / Number(formData.oldPrice)) * 100)
-        : 0));
-      data.append('stock', String(sizes.reduce((total, entry) => total + entry.stock, 0)));
+      data.append('stock', String(computedStock));
       data.append('sizes', JSON.stringify(sizes));
       data.append('description', formData.description.trim());
+      data.append('shortDescription', formData.description.trim().slice(0, 600));
+      data.append('status', formData.status || 'active');
+      data.append('featured', String(Boolean(formData.featured)));
+
+      if (sizes.length > 0) {
+        const minPrice = Math.min(...sizes.map((entry) => Number(entry.price || 0)));
+        const originalPrice = Number(formData.oldPrice || 0);
+        data.append('discount', String(originalPrice > minPrice && minPrice > 0
+          ? Math.round(((originalPrice - minPrice) / originalPrice) * 100)
+          : 0));
+      } else {
+        data.append('discount', String(Number(formData.oldPrice || 0) > basePrice && basePrice > 0
+          ? Math.round(((Number(formData.oldPrice || 0) - basePrice) / Number(formData.oldPrice || 1)) * 100)
+          : 0));
+      }
 
       if (selectedFile) {
-        data.append('image', selectedFile);
+        data.append('images', selectedFile);
       }
 
       if (modalMode === 'add') {
