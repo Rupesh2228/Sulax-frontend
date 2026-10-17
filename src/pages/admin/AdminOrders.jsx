@@ -45,9 +45,9 @@ export default function AdminOrders() {
   const updateStatus = async (id, status) => {
     try {
       const res = await api.patch(`/admin/orders/${id}/status`, { status });
-      setOrders(orders.map((o) => (o._id === id ? { ...o, status: res.order.status } : o)));
+      setOrders(orders.map((o) => (o._id === id ? { ...o, status: res.order.status, deliveredAt: res.order.deliveredAt } : o)));
       if (selectedOrder?._id === id) {
-        setSelectedOrder((prev) => ({ ...prev, status: res.order.status }));
+        setSelectedOrder((prev) => ({ ...prev, status: res.order.status, deliveredAt: res.order.deliveredAt }));
       }
       showToast(`Order #${id.slice(-6)} status updated to ${status}`);
     } catch (e) {
@@ -228,6 +228,11 @@ export default function AdminOrders() {
                       </td>
                       <td>
                         <span className={`admin-pill ${pillClass}`}>{o.status}</span>
+                        {o.deliveredAt && (
+                          <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '4px' }}>
+                            {new Date(o.deliveredAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </div>
+                        )}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
@@ -291,6 +296,9 @@ export default function AdminOrders() {
                   <div><strong>Phone:</strong> {selectedOrder.phone || '—'}</div>
                   <div><strong>Email:</strong> {selectedOrder.user?.email || '—'}</div>
                   <div><strong>Payment:</strong> {selectedOrder.payment || 'Cash on Delivery'}</div>
+                  {selectedOrder.deliveredAt && (
+                    <div><strong>Delivered:</strong> {new Date(selectedOrder.deliveredAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                  )}
                   <div style={{ gridColumn: 'span 2' }}><strong>Address:</strong> {selectedOrder.address || '—'}</div>
                 </div>
               </div>

@@ -52,10 +52,10 @@ export default function MyOrders() {
           {msg.text}
           {msg.ok === false && orders === null && <> <button className="link-button" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></>}
         </div>}
-        {orders === null ? (showLoading ? <TableSkeleton columns={6} rows={5} /> : null) : orders.length > 0 ? (
+        {orders === null ? (showLoading ? <TableSkeleton columns={7} rows={5} /> : null) : orders.length > 0 ? (
           <div className="order-box" style={{ overflowX: 'auto' }}>
             <table>
-              <thead><tr><th>Order ID</th><th>Date</th><th>Payment</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+              <thead><tr><th>Order ID</th><th>Date</th><th>Payment</th><th>Total</th><th>Status</th><th>Delivered On</th><th>Action</th></tr></thead>
               <tbody>
                 {orders.map((o) => (
                   <tr key={o._id}>
@@ -64,6 +64,7 @@ export default function MyOrders() {
                     <td data-label="Payment">{o.paymentMethod}</td>
                     <td data-label="Total">Rs. {money(o.totalAmount)}</td>
                     <td data-label="Status"><span className="status">{o.status}</span></td>
+                    <td data-label="Delivered On">{o.deliveredAt ? fmt(o.deliveredAt) : '—'}</td>
                     <td data-label="Action">
                       <div className="order-actions">
                         <Link className="view-btn" to={`/my-orders/${o._id}`}>View Details</Link>

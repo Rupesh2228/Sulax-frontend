@@ -296,6 +296,11 @@ export default function AdminStats() {
                         >
                           {o.status}
                         </span>
+                        {o.deliveredAt && (
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>
+                            {new Date(o.deliveredAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

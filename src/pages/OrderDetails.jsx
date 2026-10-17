@@ -42,6 +42,7 @@ export default function OrderDetails() {
           <p><strong>Payment:</strong> {order.paymentMethod}</p>
           <p><strong>Status:</strong> <span className="status">{order.status}</span></p>
           <p><strong>Order Date:</strong> {new Date(order.createdAt).toLocaleString('en-GB')}</p>
+          {order.deliveredAt && <p><strong>Delivered On:</strong> {new Date(order.deliveredAt).toLocaleString('en-GB')}</p>}
         </div>
         <div className="box">
           <h2>🛒 Ordered Products</h2>
