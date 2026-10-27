@@ -7,10 +7,6 @@ const CLIENT_SEO_DEFAULTS = {
     metaTitle: 'Sulax Shoes - Premium Footwear in Nepal | Sneakers, Boots & Formal',
     metaDescription: 'Shop top quality sneakers, boots, sandals, and formal shoes at Sulax Shoes Nepal. Best prices, fast nationwide cash on delivery, and 100% authentic footwear.',
   },
-  category: {
-    metaTitle: 'Shop All Shoes & Footwear Collection | Sulax Nepal',
-    metaDescription: 'Explore the complete range of men and women footwear at Sulax Nepal. Filter by category, price, and latest arrivals.',
-  },
   product: {
     metaTitle: 'Product Details | Sulax Shoes Nepal',
     metaDescription: 'Buy premium footwear at Sulax Shoes Nepal. Fast delivery with cash on delivery available.',

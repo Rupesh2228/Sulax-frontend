@@ -4,8 +4,6 @@ import { AdminFormSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const PAGES = [
-  { id: 'home', name: 'Home Page', icon: '🏠' },
-  { id: 'category', name: 'Category Pages', icon: '👟' },
   { id: 'product', name: 'Product Pages', icon: '🏷️' },
 ];
 
@@ -19,7 +17,7 @@ const EMPTY_FORM = {
 };
 
 export default function AdminSEO() {
-  const [selectedPage, setSelectedPage] = useState('home');
+  const [selectedPage, setSelectedPage] = useState('product');
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
