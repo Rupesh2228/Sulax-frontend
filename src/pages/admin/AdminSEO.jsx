@@ -4,6 +4,7 @@ import { AdminFormSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const PAGES = [
+  { id: 'home', name: 'Home SEO', icon: '🏠' },
   { id: 'product', name: 'Product SEO', icon: '🏷️' },
 ];
 
