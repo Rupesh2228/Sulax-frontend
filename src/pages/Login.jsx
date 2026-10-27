@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { GoogleLogin } from '@react-oauth/google';
-import SEO from '../components/SEO.jsx';
 
 export default function Login() {
   const { login, loginWithGoogle } = useAuth();
@@ -31,7 +30,6 @@ export default function Login() {
 
   return (
     <div className="auth-container">
-      <SEO page="home" robots="noindex, follow" title="Login | Sulax Shoes Nepal" />
       <div className="auth-box">
         <div className="auth-logo"><h1>SULAX</h1><p>SHOES COLLECTION</p></div>
         <h2>Welcome Back</h2>

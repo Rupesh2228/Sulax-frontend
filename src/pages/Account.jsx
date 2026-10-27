@@ -1,6 +1,5 @@
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import SEO from '../components/SEO.jsx';
 import '../styles/pg-account.css';
 
 export default function Account() {
@@ -13,7 +12,6 @@ export default function Account() {
   }
   return (
     <div className="pg-account">
-      <SEO page="account" robots="noindex, nofollow" title="My Account | Sulax Shoes Nepal" />
       <div className="container">
         <div className="profile">
           <div className="profile-icon">👤</div>

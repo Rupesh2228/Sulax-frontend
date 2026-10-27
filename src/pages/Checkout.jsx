@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, imgUrl, money } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import SEO from '../components/SEO.jsx';
 import '../styles/pg-checkout.css';
 
 const DELIVERY = 100;
@@ -60,7 +59,6 @@ export default function Checkout() {
   if (items.length === 0) {
     return (
       <div className="pg-checkout">
-        <SEO page="checkout" robots="noindex, nofollow" title="Secure Checkout | Sulax Shoes Nepal" />
         <div className="checkout-container">
           <h1>Checkout</h1>
           <div className="checkout-box empty-message">
@@ -75,7 +73,6 @@ export default function Checkout() {
 
   return (
     <div className="pg-checkout">
-      <SEO page="checkout" robots="noindex, nofollow" title="Secure Checkout | Sulax Shoes Nepal" />
       <div className="checkout-container">
         <div className="checkout-heading">
           <p className="checkout-eyebrow">SECURE CHECKOUT</p>

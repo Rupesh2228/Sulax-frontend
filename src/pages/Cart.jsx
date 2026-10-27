@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { imgUrl, money } from '../api.js';
 import { useCart } from '../context/CartContext.jsx';
-import SEO from '../components/SEO.jsx';
 import '../styles/pg-cart.css';
 
 const DELIVERY = 100;
@@ -12,7 +11,6 @@ export default function Cart() {
 
   return (
     <div className="pg-cart">
-      <SEO page="cart" title="Shopping Cart | Sulax Shoes Nepal" />
       <div className="container">
         <div className="cart-heading">
           <div>

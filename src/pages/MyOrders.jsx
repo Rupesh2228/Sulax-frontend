@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, money } from '../api.js';
-import SEO from '../components/SEO.jsx';
 import { TableSkeleton } from '../components/Skeletons.jsx';
 import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/pg-orders.css';
@@ -45,7 +44,6 @@ export default function MyOrders() {
 
   return (
     <div className="pg-orders">
-      <SEO page="account" robots="noindex, nofollow" title="My Orders | Sulax Shoes Nepal" />
       <div className="container">
         <h1>📦 My Orders</h1>
         {msg && <div role={msg.ok ? 'status' : 'alert'} style={{ background: msg.ok ? '#e8f7e8' : '#ffe8e8', color: msg.ok ? '#176b2c' : '#a10000', padding: 12, borderRadius: 6, marginBottom: 15 }}>

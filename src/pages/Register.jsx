@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import SEO from '../components/SEO.jsx';
 
 export default function Register() {
   const { register } = useAuth();
@@ -26,7 +25,6 @@ export default function Register() {
 
   return (
     <div className="auth-container">
-      <SEO page="home" robots="noindex, follow" title="Create Account | Sulax Shoes Nepal" />
       <div className="auth-box">
         <div className="auth-logo"><h1>SULAX</h1><p>SHOES COLLECTION</p></div>
         <h2>Create Account</h2>

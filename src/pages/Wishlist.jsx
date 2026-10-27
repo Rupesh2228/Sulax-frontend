@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, imgUrl, money } from '../api.js';
-import SEO from '../components/SEO.jsx';
 import { ProductGridSkeleton } from '../components/Skeletons.jsx';
 import useDelayedLoading from '../hooks/useDelayedLoading.js';
 import '../styles/pg-wishlist.css';
@@ -41,7 +40,6 @@ export default function Wishlist() {
 
   return (
     <div className="pg-wishlist">
-      <SEO page="wishlist" title="My Wishlist | Sulax Shoes Nepal" />
       <div className="wishlist-container">
         <h1>❤️ My Wishlist</h1>
         {error && <p role="alert">{error} <button className="link-button" type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></p>}

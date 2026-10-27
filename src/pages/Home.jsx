@@ -90,7 +90,7 @@ export default function Home() {
 
   return (
     <>
-      <SEO page="home" />
+      <SEO page={category ? 'category' : 'home'} />
       <nav className="category-nav" aria-label="Shop by category">
         <div className="category-container">
           <Link to="/" className={!category ? 'active' : ''}>All Shoes</Link>

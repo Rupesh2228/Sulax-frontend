@@ -163,12 +163,9 @@ export default function ProductDetails() {
   return (
     <div className="pg-product">
       <SEO
-        page="product_details"
+        page="product"
         title={`${product.name} | Sulax Shoes Nepal`}
         description={product.description || `Buy ${product.name} at Sulax Shoes Nepal for Rs. ${displayPrice}. Fast cash on delivery.`}
-        ogTitle={`${product.name} - Sulax Shoes`}
-        ogDescription={product.description || `Buy ${product.name} at Sulax Shoes Nepal.`}
-        ogImage={activeImage?.url ? imgUrl(activeImage.url) : ''}
         schema={{
           '@context': 'https://schema.org',
           '@type': 'Product',

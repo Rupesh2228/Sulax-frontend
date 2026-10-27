@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import SEO from '../components/SEO.jsx';
 
 export default function Contact() {
   const { user } = useAuth();
@@ -27,7 +26,6 @@ export default function Contact() {
 
   return (
     <main className="contact-container">
-      <SEO page="contact" title="Contact Us | Sulax Shoes Nepal Customer Care" />
       <div className="contact-grid">
         <div className="contact-card">
           <h1>Contact Us</h1>
