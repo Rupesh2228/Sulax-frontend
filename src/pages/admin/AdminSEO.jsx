@@ -15,6 +15,7 @@ const EMPTY_FORM = {
   h1: '',
   description: '',
   faq: '',
+  schemaJson: '',
 };
 
 export default function AdminSEO() {
@@ -49,6 +50,7 @@ export default function AdminSEO() {
           h1: seo.h1 || '',
           description: seo.description || '',
           faq: seo.faq || '',
+          schemaJson: seo.schemaJson || '',
         });
       })
       .catch((error) => {
@@ -72,12 +74,30 @@ export default function AdminSEO() {
 
   const handleSave = async (event) => {
     event.preventDefault();
+    if (formData.schemaJson.trim()) {
+      try {
+        JSON.parse(formData.schemaJson);
+      } catch {
+        showToast('Structured data must contain valid JSON.', 'error');
+        return;
+      }
+    }
     try {
       setSaving(true);
-      await api.put(`/admin/seo/${selectedPage}`, formData);
+      await api.put(`/admin/seo/${selectedPage}`, {
+        pageName: formData.pageName.trim(),
+        metaTitle: formData.metaTitle.trim(),
+        metaDescription: formData.metaDescription.trim(),
+        h1: formData.h1.trim(),
+        description: formData.description.trim(),
+        faq: formData.faq.trim(),
+        schemaJson: formData.schemaJson.trim(),
+      });
       showToast(`SEO settings for ${PAGES.find((page) => page.id === selectedPage)?.name} saved.`);
     } catch (error) {
-      showToast(error.message || 'Error saving SEO settings.', 'error');
+      const fieldError = error.errors?.[0]?.field;
+      const message = fieldError ? `${fieldError}: ${error.message}` : error.message;
+      showToast(message || 'Error saving SEO settings.', 'error');
     } finally {
       setSaving(false);
     }
@@ -214,6 +234,19 @@ export default function AdminSEO() {
                       onChange={(event) => updateField('faq', event.target.value)}
                     />
                     <small className="form-hint">Answer sizing, delivery time, and exchanges for long-tail searches.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Structured data JSON-LD</label>
+                    <textarea
+                      className="form-textarea"
+                      style={{ minHeight: '180px', fontFamily: 'Consolas, Monaco, monospace' }}
+                      placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "Product"\n}'}
+                      maxLength={10000}
+                      value={formData.schemaJson}
+                      onChange={(event) => updateField('schemaJson', event.target.value)}
+                    />
+                    <small className="form-hint">Optional JSON-LD for Product, WebSite, or FAQPage structured data.</small>
                   </div>
                 </div>
               </div>

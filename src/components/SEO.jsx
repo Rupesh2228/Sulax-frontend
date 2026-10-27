@@ -71,9 +71,10 @@ export default function SEO({
 
     const finalTitle = title || base.metaTitle || 'Sulax Shoes Collection';
     const finalDesc = description || base.metaDescription || '';
+    const finalSchema = schema || base.schemaJson || '';
     document.title = finalTitle;
     setMetaTag('description', finalDesc);
-    setJsonLd(schema || '');
+    setJsonLd(finalSchema);
   }, [page, dbSeo, title, description, schema]);
 
   return null;
