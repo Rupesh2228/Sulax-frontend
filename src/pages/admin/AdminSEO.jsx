@@ -4,7 +4,7 @@ import { AdminFormSkeleton } from '../../components/Skeletons.jsx';
 import useDelayedLoading from '../../hooks/useDelayedLoading.js';
 
 const PAGES = [
-  { id: 'product', name: 'Product Pages', icon: '🏷️' },
+  { id: 'product', name: 'Product SEO', icon: '🏷️' },
 ];
 
 const EMPTY_FORM = {
@@ -97,8 +97,8 @@ export default function AdminSEO() {
 
       <div className="admin-page-header">
         <div className="admin-page-title">
-          <h1>Search Engine Optimization (SEO)</h1>
-          <p>Manage only the title, description, H1, original page copy, and FAQ content used for search.</p>
+          <h1>Product Search Engine Optimization (SEO)</h1>
+          <p>Manage product title, description, H1, original page copy, and FAQ content used for search.</p>
         </div>
         <button
           type="submit"
